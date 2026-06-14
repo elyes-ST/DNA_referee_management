@@ -80,7 +80,7 @@ export class DesignationsService {
     matchId: string,
     role?: string,
     userRole?: string,
-  ): Promise<{ referee: any; warnings: string[] }[]> {
+  ): Promise<{ referee: any; warnings: string[]; errors?: string[]; isEligible?: boolean }[]> {
     const match = await this.matchModel.findById(matchId);
     if (!match) {
       throw new NotFoundException(`Match avec ID ${matchId} non trouvé`);
@@ -117,7 +117,7 @@ export class DesignationsService {
       if (awayTeam) awayTeamRegion = (awayTeam as any).region;
     }
 
-    const eligible: { referee: any; warnings: string[] }[] = [];
+    const eligible: { referee: any; warnings: string[]; errors?: string[]; isEligible?: boolean }[] = [];
 
     for (const referee of allReferees) {
       const refereeId = (referee._id as Types.ObjectId).toString();
@@ -130,6 +130,7 @@ export class DesignationsService {
           refereeId,
           match.journee,
           match.saison,
+          match.competition,
           matchId,
         );
       if (hasJourneeConflict) {
@@ -161,7 +162,7 @@ export class DesignationsService {
         match.category || '',
       );
       if (!isEligible) {
-        errors.push('Catégorie insuffisante pour ce match');
+        warnings.push('Catégorie insuffisante pour ce match');
       }
 
       // 5. Region conflict of interest
@@ -209,10 +210,13 @@ export class DesignationsService {
         warnings.push('Limite de matchs du mois atteinte');
       }
 
-      // Only include referees that pass ALL hard rules
-      if (errors.length === 0) {
-        eligible.push({ referee: referee.toObject(), warnings });
-      }
+      // Include ALL referees, but mark their eligibility
+      eligible.push({
+        referee: referee.toObject(),
+        warnings,
+        errors,
+        isEligible: errors.length === 0,
+      });
     }
 
     return eligible;

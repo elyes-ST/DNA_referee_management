@@ -1,9 +1,12 @@
 import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { PaginationDto } from '../../common/dto';
-import { RefereeCategory } from '../../common/enums';
+import { RefereeCategory, RefereeRole } from '../../common/enums';
 
 export class FilterRefereesDto extends PaginationDto {
+  @IsEnum(RefereeRole)
+  @IsOptional()
+  allowedRole?: RefereeRole;
   /** Single value (`C1`) or comma-separated list (`C1,C2`) — parsed into an array */
   @IsOptional()
   @Transform(({ value }) => {
@@ -24,18 +27,30 @@ export class FilterRefereesDto extends PaginationDto {
 
   @IsBoolean()
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ obj, key }) => {
+    if (obj[key] === 'true' || obj[key] === true) return true;
+    if (obj[key] === 'false' || obj[key] === false) return false;
+    return obj[key];
+  })
   isAvailable?: boolean;
 
   /** Filter by referee's VAR certification */
   @IsBoolean()
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ obj, key }) => {
+    if (obj[key] === 'true' || obj[key] === true) return true;
+    if (obj[key] === 'false' || obj[key] === false) return false;
+    return obj[key];
+  })
   isVARCertified?: boolean;
 
   @IsBoolean()
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ obj, key }) => {
+    if (obj[key] === 'true' || obj[key] === true) return true;
+    if (obj[key] === 'false' || obj[key] === false) return false;
+    return obj[key];
+  })
   isActive?: boolean;
 
   /** Search by firstName, lastName, email (via User) or matricule */

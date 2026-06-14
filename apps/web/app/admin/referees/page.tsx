@@ -162,9 +162,12 @@ const RefereesListPage = () => {
       }
 
       if (appliedSearch)  params.search       = appliedSearch;
-      if (statusFilter)   params.status       = statusFilter;
+      if (statusFilter) {
+        if (statusFilter === 'active') params.isActive = true;
+        else if (statusFilter === 'inactive') params.isActive = false;
+      }
       if (roleFilter)     params.allowedRole  = roleFilter;
-      if (availFilter)    params.isAvailable  = availFilter;
+      if (availFilter)    params.isAvailable  = availFilter === 'true';
 
       const response  = await api.referees.getAll(params);
       const data: any = response.data;
@@ -175,11 +178,7 @@ const RefereesListPage = () => {
       // Derive quick stats from the current page's data while we wait for a
       // dedicated endpoint; replace with a real aggregation call if available.
       const list: any[] = data.data || [];
-      setStats({
-        active:  list.filter((r: any) => r.userId?.isActive).length,
-        var:     list.filter((r: any) => r.isVARCertified).length,
-        unavail: list.filter((r: any) => !r.isAvailable).length,
-      });
+      // Stats removed as requested because they vary with pagination
     } catch {
       toast.error('Erreur lors du chargement des arbitres');
     } finally {
@@ -431,7 +430,7 @@ const RefereesListPage = () => {
       <div className="flex gap-0 border border-gray-200 dark:border-flashscore-border rounded-xl overflow-hidden bg-white dark:bg-flashscore-card min-h-[600px]">
 
         {/* ── Sidebar ───────────────────────────────────────────────────────── */}
-        <aside className="w-48 shrink-0 border-r border-gray-200 dark:border-flashscore-border bg-gray-50 dark:bg-flashscore-bg py-4 hidden md:flex flex-col">
+        <aside className="w-48 shrink-0 border-r border-gray-200 dark:border-flashscore-border bg-gray-50 dark:bg-black/10 py-4 hidden md:flex flex-col">
           <p className="px-4 pb-3 text-[10px] font-medium text-gray-400 dark:text-flashscore-muted uppercase tracking-widest">
             Catégories
           </p>
@@ -446,8 +445,8 @@ const RefereesListPage = () => {
                 className={[
                   'flex items-center justify-between px-4 py-2 text-left w-full transition-colors border-l-2',
                   isActive
-                    ? 'border-l-[#ce1126] bg-white dark:bg-flashscore-card'
-                    : 'border-l-transparent hover:bg-white dark:hover:bg-flashscore-card',
+                    ? 'border-l-[#ce1126] bg-white dark:bg-flashscore-hover'
+                    : 'border-l-transparent hover:bg-white dark:hover:bg-flashscore-hover/50',
                   lockedCategory && cat.value !== lockedCategory && cat.value !== '' ? 'opacity-40 cursor-default' : 'cursor-pointer',
                 ].join(' ')}
               >
@@ -458,7 +457,7 @@ const RefereesListPage = () => {
                 {count !== null && (
                   <span className={[
                     'text-[10px] rounded-full px-1.5 py-0.5 font-medium',
-                    isActive ? 'bg-[#ce1126] text-white' : 'bg-gray-200 dark:bg-flashscore-border text-gray-500 dark:text-flashscore-muted',
+                    isActive ? 'bg-[#ce1126] text-white' : 'bg-gray-200 dark:bg-flashscore-hover text-gray-500 dark:text-flashscore-muted',
                   ].join(' ')}>
                     {count}
                   </span>
@@ -478,7 +477,7 @@ const RefereesListPage = () => {
                 Liste des Arbitres
               </h3>
               {lockedCategory && (
-                <span className="text-[11px] bg-red-50 text-[#ce1126] border border-red-200 rounded-full px-2.5 py-0.5 font-medium">
+                <span className="text-[11px] bg-red-50 dark:bg-red-950/30 text-[#ce1126] dark:text-red-400 border border-red-200 dark:border-red-900/50 rounded-full px-2.5 py-0.5 font-medium">
                   {ROLE_SCOPE_LABEL[user!.role] ?? lockedCategory}
                 </span>
               )}
@@ -519,21 +518,6 @@ const RefereesListPage = () => {
                 </Button>
               )}
             </div>
-          </div>
-
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 px-5 py-3 border-b border-gray-200 dark:border-flashscore-border bg-gray-50 dark:bg-flashscore-bg">
-            {[
-              { label: 'Total',           value: total,           color: 'text-[#ce1126]'                                     },
-              { label: 'Actifs',          value: stats.active,    color: 'text-green-700 dark:text-green-400'                 },
-              { label: 'Certifiés VAR',   value: stats.var,       color: 'text-blue-700 dark:text-blue-400'                  },
-              { label: 'Non disponibles', value: stats.unavail,   color: 'text-red-700 dark:text-red-400'                    },
-            ].map((s) => (
-              <div key={s.label} className="bg-white dark:bg-flashscore-card rounded-lg border border-gray-200 dark:border-flashscore-border px-3.5 py-2.5">
-                <p className="text-[11px] text-gray-400 dark:text-flashscore-muted mb-1">{s.label}</p>
-                <p className={`text-xl font-medium ${s.color}`}>{s.value}</p>
-              </div>
-            ))}
           </div>
 
           {/* Filter chips */}

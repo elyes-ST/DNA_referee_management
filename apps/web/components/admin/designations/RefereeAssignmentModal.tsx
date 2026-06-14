@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { Send, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Send, ChevronLeft, ChevronRight, Check, Search } from 'lucide-react';
 import { Modal } from '../../../components/ui/Modal';
 import { Avatar } from '../../../components/ui/Avatar';
 import { renderTeamLogo } from '../../../components/admin/planning/MatchCard';
@@ -179,8 +179,12 @@ function RefereeCard({
   onSelect: () => void;
 }) {
   const isAvailable = referee.isAvailable !== false;
-  const isDisabled  = !isAvailable || isAlreadyUsed;
+  const isEligible  = referee.__isEligible !== false;
+  const isDisabled  = !isAvailable || isAlreadyUsed || !isEligible;
   const initials    = `${referee.userId?.firstName?.[0] || ''}${referee.userId?.lastName?.[0] || 'A'}`;
+  
+  // Get the first error to display if ineligible
+  const errorReason = referee.__errors && referee.__errors.length > 0 ? referee.__errors[0] : 'Incompatible';
 
   return (
     <button
@@ -223,20 +227,25 @@ function RefereeCard({
       </div>
 
       {/* Overlay labels */}
-      {!isAvailable && (
+      {!isAvailable ? (
         <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-flashscore-card/80 rounded-xl">
           <span className="text-[10px] font-bold text-red-700 bg-red-100 dark:bg-red-950/40 dark:text-red-400 px-2 py-1 rounded-full">
             Indisponible
           </span>
         </div>
-      )}
-      {isAvailable && isAlreadyUsed && (
+      ) : isAlreadyUsed ? (
         <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-flashscore-card/80 rounded-xl">
           <span className="text-[10px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 px-2 py-1 rounded-full">
             Déjà désigné
           </span>
         </div>
-      )}
+      ) : !isEligible ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-flashscore-card/80 rounded-xl">
+          <span className="text-[10px] font-bold text-gray-600 bg-gray-200 dark:bg-gray-800 dark:text-gray-300 px-2 py-1 rounded-full max-w-[90%] text-center truncate" title={referee.__errors?.join(' | ')}>
+            {errorReason}
+          </span>
+        </div>
+      ) : null}
     </button>
   );
 }
@@ -322,6 +331,12 @@ export const RefereeAssignmentModal = ({
 }: RefereeAssignmentModalProps) => {
   const [step, setStep]           = useState(0);
   const [showPitch, setShowPitch] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showOnlyEligible, setShowOnlyEligible] = useState(false);
+
+  useEffect(() => {
+    setSearchTerm('');
+  }, [step]);
 
   if (!match) return null;
 
@@ -341,11 +356,23 @@ export const RefereeAssignmentModal = ({
   );
 
   // Filter eligible refs for this step by allowedRoles
-  const eligibleForStep = currentRole
+  let eligibleForStep = currentRole
     ? eligibleReferees.filter(
         (r) => !r.allowedRoles?.length || r.allowedRoles.includes(currentRole)
       )
     : [];
+
+  if (searchTerm) {
+    const terms = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+    eligibleForStep = eligibleForStep.filter((r) => {
+      const name = `${r.userId?.firstName || ''} ${r.userId?.lastName || ''} ${r.matricule || ''}`.toLowerCase();
+      return terms.every((term) => name.includes(term));
+    });
+  }
+
+  if (showOnlyEligible) {
+    eligibleForStep = eligibleForStep.filter((r) => r.__isEligible !== false);
+  }
 
   // Build filled-positions map for pitch diagram
   const filledPositions: Record<string, boolean> = {};
@@ -368,7 +395,7 @@ export const RefereeAssignmentModal = ({
 
   return (
     <Modal isOpen={!!match} onClose={onClose} title="">
-      <div className="flex flex-col" style={{ maxHeight: '85vh', minWidth: 0 }}>
+      <div className="flex flex-col" style={{ maxHeight: '150vh', minWidth: 0 }}>
 
         {/* ── Scoreboard ── */}
         <div
@@ -476,6 +503,30 @@ export const RefereeAssignmentModal = ({
                   </div>
                 </div>
               )}
+
+              {/* Search & Filter */}
+              <div className="flex flex-col sm:flex-row gap-2 mb-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher par nom ou matricule..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-flashscore-border bg-white dark:bg-flashscore-bg text-gray-900 dark:text-flashscore-text focus:outline-none focus:border-[#ce1126]"
+                  />
+                </div>
+                <button
+                  onClick={() => setShowOnlyEligible(!showOnlyEligible)}
+                  className={`px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap ${
+                    showOnlyEligible 
+                      ? 'bg-[#ce1126] border-[#ce1126] text-white' 
+                      : 'bg-white dark:bg-flashscore-bg border-gray-200 dark:border-flashscore-border text-gray-600 dark:text-flashscore-muted hover:bg-gray-50 dark:hover:bg-flashscore-hover'
+                  }`}
+                >
+                  Uniquement compatibles
+                </button>
+              </div>
 
               {/* Referee grid */}
               {loading ? (

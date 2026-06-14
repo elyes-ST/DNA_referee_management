@@ -149,6 +149,7 @@ export class RefereesService {
       isAvailable,
       isVARCertified,
       isActive,
+      allowedRole,
       search,
       maxAge,
       minAge,
@@ -160,6 +161,7 @@ export class RefereesService {
     if (region) filter.region = region;
     if (isAvailable !== undefined) filter.isAvailable = isAvailable;
     if (isVARCertified !== undefined) filter.isVARCertified = isVARCertified;
+    if (allowedRole) filter.allowedRoles = allowedRole;
 
     if (maxAge !== undefined || minAge !== undefined) {
       filter.dateOfBirth = {};
@@ -180,11 +182,21 @@ export class RefereesService {
       const userFilter: any = { role: Role.ARBITRE };
       if (isActive !== undefined) userFilter.isActive = isActive;
       if (search) {
-        userFilter.$or = [
-          { firstName: { $regex: search, $options: 'i' } },
-          { lastName: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } },
-        ];
+        const terms = search.trim().split(/\s+/);
+        if (terms.length > 1) {
+          userFilter.$and = terms.map((term) => ({
+            $or: [
+              { firstName: { $regex: term, $options: 'i' } },
+              { lastName: { $regex: term, $options: 'i' } },
+            ],
+          }));
+        } else {
+          userFilter.$or = [
+            { firstName: { $regex: search, $options: 'i' } },
+            { lastName: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } },
+          ];
+        }
       }
 
       const matchingUsers = await this.userModel

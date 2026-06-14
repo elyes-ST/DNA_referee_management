@@ -180,8 +180,23 @@ export default function DesignationsPage() {
       const response = await api.designations.getEligibleReferees(matchId);
       const refereesData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
 
-      // Extract referee objects from suggestions
-      const refereesList = refereesData.map((suggestion: any) => suggestion.referee || suggestion);
+      // Extract referee objects from suggestions and keep metadata
+      const refereesList = refereesData.map((suggestion: any) => {
+        const r = suggestion.referee || suggestion;
+        return {
+          ...r,
+          __isEligible: suggestion.isEligible !== false,
+          __errors: suggestion.errors || [],
+          __warnings: suggestion.warnings || [],
+        };
+      });
+
+      // Sort: eligible first, then alphabetical
+      refereesList.sort((a: any, b: any) => {
+        if (a.__isEligible && !b.__isEligible) return -1;
+        if (!a.__isEligible && b.__isEligible) return 1;
+        return 0;
+      });
 
       setEligibleReferees(prev => ({ ...prev, [matchId]: refereesList }));
     } catch (error) {

@@ -127,10 +127,10 @@ const CommissionDashboard = ({ role }: { role: Role }) => {
 
       {/* ── KPI row ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Kpi label="Matchs à Venir"         value={upcomingTotal}  sub={`${completedTotal} terminés cette saison`} color="border-blue-200   bg-blue-50   text-blue-800"   />
-        <Kpi label="Désignations En Attente" value={pendingDesig}   sub={`${completionRate}% validées`}             color="border-amber-200  bg-amber-50  text-amber-800"  />
-        <Kpi label="Arbitres Actifs"         value={activeReferees} sub="dans votre catégorie"                      color="border-purple-200 bg-purple-50 text-purple-800" />
-        <Kpi label="Paiements En Attente"    value={pendingPay}     sub={`${paidCount} payés au total`}             color="border-green-200  bg-green-50  text-green-800"  />
+        <Kpi label="Matchs à Venir"         value={upcomingTotal}  sub={`${completedTotal} terminés cette saison`} color="border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-400"   />
+        <Kpi label="Désignations En Attente" value={pendingDesig}   sub={`${completionRate}% validées`}             color="border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400"  />
+        <Kpi label="Arbitres Actifs"         value={activeReferees} sub="dans votre catégorie"                      color="border-purple-200 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-950/20 text-purple-800 dark:text-purple-400" />
+        <Kpi label="Paiements En Attente"    value={pendingPay}     sub={`${paidCount} payés au total`}             color="border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-950/20 text-green-800 dark:text-green-400"  />
       </div>
 
       {/* ── Activity panels ─────────────────────────────────────────────── */}
@@ -239,10 +239,10 @@ const CommissionDashboard = ({ role }: { role: Role }) => {
               <p className="text-xs text-orange-400 mt-0.5">déclarations en attente</p>
             </div>
           ) : (
-            <div className="p-4 rounded-xl bg-green-50 border border-green-100">
-              <p className="text-xs text-green-600 mb-1">Paiements traités</p>
-              <span className="text-2xl font-bold text-green-700">{paidCount}</span>
-              <p className="text-xs text-green-500 mt-0.5">{pendingPay} encore en attente</p>
+            <div className="p-4 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900/50">
+              <p className="text-xs text-green-600 dark:text-green-500 mb-1">Paiements traités</p>
+              <span className="text-2xl font-bold text-green-700 dark:text-green-400">{paidCount}</span>
+              <p className="text-xs text-green-500 dark:text-green-600 mt-0.5">{pendingPay} encore en attente</p>
             </div>
           )}
         </div>

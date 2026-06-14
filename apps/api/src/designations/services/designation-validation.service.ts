@@ -157,6 +157,7 @@ export class DesignationValidationService {
         ref.refereeId,
         match.journee,
         match.saison,
+        match.competition,
         matchId,
       );
       if (hasJourneeConflict) {
@@ -192,8 +193,8 @@ export class DesignationValidationService {
         match.category || '',
       );
       if (!isEligible) {
-        errors.push(
-          `La catégorie de l'arbitre ${refereeName} ne correspond pas aux exigences du match`,
+        warnings.push(
+          `Attention: La catégorie de l'arbitre ${refereeName} ne correspond pas aux exigences du match`,
         );
       }
 
@@ -256,13 +257,17 @@ export class DesignationValidationService {
     refereeId: string,
     journee: number,
     saison: string,
+    competition: string,
     excludeMatchId?: string,
   ): Promise<boolean> {
-    // Trouver tous les matchs de cette journée
+    if (journee === undefined || journee === null) return false;
+
+    // Trouver tous les matchs de cette journée pour la même compétition
     const matches = await this.matchModel
       .find({
         journee,
         saison,
+        competition,
         ...(excludeMatchId
           ? { _id: { $ne: new Types.ObjectId(excludeMatchId) } }
           : {}),
