@@ -49,7 +49,6 @@ const CATEGORY_OPTIONS = [
 const ALL_REFEREE_CATEGORIES = [
   { value: 'A',        label: 'Catégorie A'         },
   { value: 'B',        label: 'Catégorie B'         },
-  { value: 'C',        label: 'Catégorie C'         },
   { value: 'C1',       label: 'Catégorie C1'        },
   { value: 'C2',       label: 'Catégorie C2'        },
   { value: 'JEUNE',    label: 'Catégorie Jeune'     },

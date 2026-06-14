@@ -201,6 +201,7 @@ export const API_ROUTES = {
     CALCULATE: '/payment-rates/calculate',
     GET_ONE: '/payment-rates/:id',
     UPDATE: '/payment-rates/:id',
+    DELETE: '/payment-rates/:id',
   },
 
   

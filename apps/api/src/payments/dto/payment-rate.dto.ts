@@ -27,17 +27,7 @@ export class CreatePaymentRateDto {
   @Min(0)
   amount: number;
 
-  @IsNotEmpty()
-  @IsString()
-  saison: string;
 
-  @IsNotEmpty()
-  @IsString()
-  effectiveFrom: string;
-
-  @IsOptional()
-  @IsString()
-  effectiveTo?: string;
 }
 
 export class UpdatePaymentRateDto {
@@ -70,9 +60,6 @@ export class FilterPaymentRatesDto {
   @IsEnum(Competition)
   competition?: Competition;
 
-  @IsOptional()
-  @IsString()
-  saison?: string;
 }
 
 export class CalculatePaymentDto {

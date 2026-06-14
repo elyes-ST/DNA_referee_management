@@ -33,7 +33,6 @@ export class PaymentRatesService {
       category: createDto.category,
       competition: createDto.competition,
       role: createDto.role,
-      saison: createDto.saison,
       effectiveTo: null,
     });
 
@@ -45,10 +44,6 @@ export class PaymentRatesService {
 
     return this.paymentRateModel.create({
       ...createDto,
-      effectiveFrom: new Date(createDto.effectiveFrom),
-      effectiveTo: createDto.effectiveTo
-        ? new Date(createDto.effectiveTo)
-        : undefined,
       createdBy: new Types.ObjectId(userId),
     });
   }
@@ -59,13 +54,12 @@ export class PaymentRatesService {
     page: number;
     limit: number;
   }> {
-    const { page = 1, limit = 10, category, competition, saison } = filterDto;
+    const { page = 1, limit = 10, category, competition } = filterDto;
     const skip = (page - 1) * limit;
 
     const filter: any = {};
     if (category) filter.category = category;
     if (competition) filter.competition = competition;
-    if (saison) filter.saison = saison;
 
     const [rates, total] = await Promise.all([
       this.paymentRateModel
@@ -95,12 +89,8 @@ export class PaymentRatesService {
   }
 
   async findActive(): Promise<PaymentRate[]> {
-    const now = new Date();
     return this.paymentRateModel
-      .find({
-        effectiveFrom: { $lte: now },
-        $or: [{ effectiveTo: { $gte: now } }, { effectiveTo: null }],
-      })
+      .find({})
       .sort({ category: 1, competition: 1, role: 1 })
       .exec();
   }
@@ -116,9 +106,6 @@ export class PaymentRatesService {
 
     if (updateDto.amount !== undefined) {
       rate.amount = updateDto.amount;
-    }
-    if (updateDto.effectiveTo) {
-      rate.effectiveTo = new Date(updateDto.effectiveTo);
     }
 
     return rate.save();
@@ -142,9 +129,6 @@ export class PaymentRatesService {
         category: dto.category,
         competition: match.competition,
         role: dto.role,
-        saison: match.saison,
-        effectiveFrom: { $lte: match.date },
-        $or: [{ effectiveTo: { $gte: match.date } }, { effectiveTo: null }],
       })
       .exec();
 

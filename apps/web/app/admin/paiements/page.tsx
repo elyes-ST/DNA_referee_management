@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect,useCallback} from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from '../../../components/ui/Card';
 import { StatCard } from '../../../components/admin/StatCard';
 import { Badge } from '../../../components/ui/Badge';
@@ -21,6 +21,7 @@ import {
   FileText,
   Search,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 import { usePayments, usePaymentStatistics, type Payment } from '../../../hooks/usePayments';
 import { api } from '../../../services/api';
@@ -79,6 +80,7 @@ const PaymentsPage = () => {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [selectedMatches, setSelectedMatches] = useState<string[]>([]);
   const [matchToReplace, setMatchToReplace] = useState<any>(null);
+  const matchToReplaceRef = useRef<any>(null);
   const [showReplaceModal, setShowReplaceModal] = useState(false);
   const [showMatchListModal, setShowMatchListModal] = useState(false);
 
@@ -101,8 +103,6 @@ const PaymentsPage = () => {
     competition: 'LIGUE_1',
     amount: '',
     role: '',
-    effectiveFrom: '',
-    effectiveTo:'',
     saison: getSaisonFromDate(),
   });
 
@@ -213,8 +213,8 @@ const [showDetailModal, setShowDetailModal] = useState(false);
 
   const handleCreateRate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rateForm.category || !rateForm.competition || !rateForm.amount || !rateForm.role || !rateForm.effectiveFrom) {
-      toast.error('Veuillez remplir tous les champs requis');
+    if (!rateForm.category || !rateForm.competition || !rateForm.amount || !rateForm.role) {
+      toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
@@ -224,9 +224,6 @@ const [showDetailModal, setShowDetailModal] = useState(false);
         competition: rateForm.competition,
         amount: parseFloat(rateForm.amount),
         role: rateForm.role,
-        effectiveFrom: rateForm.effectiveFrom,
-        effectiveTo: rateForm.effectiveTo || undefined,
-        saison: rateForm.saison,
       });
       toast.success('Barème créé avec succès!');
       setShowRateModal(false);
@@ -235,8 +232,6 @@ const [showDetailModal, setShowDetailModal] = useState(false);
         competition: 'LIGUE_1',
         amount: '',
         role: '',
-        effectiveFrom: '',
-        effectiveTo:'',
         saison: getSaisonFromDate(),
       });
       fetchRates();
@@ -253,16 +248,9 @@ const [showDetailModal, setShowDetailModal] = useState(false);
     }
 
     try {
-      const updateData: any = {
+      await api.paymentRates.update(selectedRate._id, {
         amount: parseFloat(rateForm.amount),
-      };
-      
-      // Only add effectiveTo if it has a value
-      if (rateForm.effectiveTo) {
-        updateData.effectiveTo = rateForm.effectiveTo;
-      }
-      
-      await api.paymentRates.update(selectedRate._id, updateData);
+      });
       toast.success('Barème modifié avec succès!');
       setShowRateModal(false);
       setSelectedRate(null);
@@ -271,8 +259,6 @@ const [showDetailModal, setShowDetailModal] = useState(false);
         competition: 'LIGUE1',
         amount: '',
         role: '',
-        effectiveFrom: '',
-        effectiveTo: '',
         saison: getSaisonFromDate(),
       });
       fetchRates();
@@ -281,21 +267,27 @@ const [showDetailModal, setShowDetailModal] = useState(false);
     }
   };
 
+  const handleDeleteRate = async (rateId: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce barème ?')) {
+      return;
+    }
+    
+    try {
+      await api.paymentRates.delete(rateId);
+      toast.success('Barème supprimé avec succès!');
+      fetchRates();
+    } catch (err) {
+      toast.error('Erreur lors de la suppression du barème');
+    }
+  };
+
   const openEditModal = (rate: any) => {
     setSelectedRate(rate);
-    const dateFromValue = (rate.effectiveFrom 
-      ? new Date(rate.effectiveFrom).toISOString().split('T')[0] 
-      : new Date().toISOString().split('T')[0]) as string;
-    const dateToValue = (rate.effectiveTo 
-      ? new Date(rate.effectiveTo).toISOString().split('T')[0] 
-      : '') as string;
     setRateForm({
       category: rate.category,
       competition: rate.competition,
       amount: rate.amount.toString(),
       role: rate.role || '',
-      effectiveFrom: dateFromValue,
-      effectiveTo: dateToValue,
       saison: rate.saison || getSaisonFromDate(),
     });
     setShowRateModal(true);
@@ -308,8 +300,6 @@ const [showDetailModal, setShowDetailModal] = useState(false);
       competition: 'LIGUE1',
       amount: '',
       role: '',
-      effectiveFrom: '',
-      effectiveTo:'',
       saison: getSaisonFromDate(),
     });
     setShowRateModal(true);
@@ -340,23 +330,52 @@ const [showDetailModal, setShowDetailModal] = useState(false);
   }
   };
   const debouncedLoadReferees = useCallback(
-      debounce(async (inputValue: string, callback: Function) => {
-        try{
-  const response = await api.referees.getAll({
-      search: inputValue,
-      page:1,
-      limit: 10,
-  });
+    debounce(async (inputValue: string, callback: Function) => {
+      try {
+        const match = matchToReplaceRef.current;
+        if (match) {
+          // Fetch only eligible referees for this match and role
+          const response = await api.designations.getEligibleReferees(match.matchId, { role: match.role });
+          
+          let eligible = response.data || [];
+          if (inputValue) {
+            const lowerInput = inputValue.toLowerCase();
+            eligible = eligible.filter((item: any) => {
+              const name = `${item.referee.userId?.firstName || ''} ${item.referee.userId?.lastName || ''} ${item.referee.matricule}`.toLowerCase();
+              return name.includes(lowerInput);
+            });
+          }
 
-  callback(response.data.data.map((referee: any) => ({
-    value: referee._id,
-    label: `${referee.userId.firstName} ${referee.userId.lastName} (${referee.matricule}) - ${referee.category}`,
-  })));
-} catch (err) {
-  toast.error("Erreur lors du chargement des arbitres");
-  callback([]);
-}},500),[]);
-const loadReferees = (inputValue: string) =>
+          callback(eligible.slice(0, 50).map((item: any) => {
+            const referee = item.referee;
+            const hasWarnings = item.warnings && item.warnings.length > 0;
+            const warningText = hasWarnings ? ` (⚠️ ${item.warnings.join(', ')})` : '';
+            return {
+              value: referee._id,
+              label: `${referee.userId?.firstName || ''} ${referee.userId?.lastName || ''} (${referee.matricule}) - ${referee.category} - ${referee.region}${warningText}`,
+            };
+          }));
+        } else {
+          // Fallback to all referees if no match context
+          const response = await api.referees.getAll({
+            search: inputValue,
+            page: 1,
+            limit: 50,
+          });
+
+          callback(response.data.data.map((referee: any) => ({
+            value: referee._id,
+            label: `${referee.userId?.firstName || ''} ${referee.userId?.lastName || ''} (${referee.matricule}) - ${referee.category} - ${referee.region}`,
+          })));
+        }
+      } catch (err) {
+        toast.error("Erreur lors du chargement des arbitres");
+        callback([]);
+      }
+    }, 500), 
+  []);
+
+  const loadReferees = (inputValue: string) =>
     new Promise((resolve) => debouncedLoadReferees(inputValue, resolve));
 
 const handleReplaceReferee = async (
@@ -364,13 +383,14 @@ const handleReplaceReferee = async (
   newRefereeId: string
 ) => {
   try {
-    const res= await api.designations.getByMatch(match.matchId); 
+    const res = await api.designations.getByMatch(match.matchId); 
     const oldDesignation = res.data;
-    const updatedReferees = oldDesignation.referees.map((r: any) =>
-      r.refereeId._id === selectedReferee
+    const updatedReferees = oldDesignation.referees.map((r: any) => {
+      const refIdStr = r.refereeId?._id || r.refereeId;
+      return refIdStr === selectedReferee
         ? { refereeId: newRefereeId, role: r.role } 
-        : { refereeId: r.refereeId._id, role: r.role } 
-    );
+        : { refereeId: refIdStr, role: r.role };
+    });
 
     await api.designations.update(oldDesignation._id, {
       referees: updatedReferees,
@@ -388,8 +408,8 @@ const handleReplaceReferee = async (
     setNewReferee(null);
     setShowReplaceModal(false);
     setShowMatchListModal(true);
-  } catch (err) {
-    toast.error("Erreur update désignation");
+  } catch (err: any) {
+    toast.error(err.response?.data?.message || "Erreur update désignation");
   } finally {
     setLoadingPreview(false);
   }
@@ -479,10 +499,6 @@ const handleFinalGenerateInvoice = async () => {
   };
 
 
-  // Debounced search: applies the search term 500ms after the user stops
-  // typing, resetting to the first page. No Enter submission needed. The guard
-  // keeps the filters object identity stable when the value is unchanged so no
-  // redundant fetch is triggered.
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   useEffect(() => {
     setFilters((f) => (f.search === debouncedSearchTerm ? f : { ...f, search: debouncedSearchTerm, page: 1 }));
@@ -519,7 +535,6 @@ const categoryOption=[
                   { value: '', label: 'Toutes les catégories' },
                   { value: 'A', label: 'Catégorie A' },
                   { value: 'B', label: 'Catégorie B' },
-                  { value: 'C', label: 'Catégorie C' },
                   { value: 'C1', label: 'Catégorie Amateur C1' },
                   { value: 'C2', label: 'Catégorie Amateur C2' },
                   { value: 'JEUNE', label: 'Catégorie Jeune' },
@@ -838,7 +853,7 @@ const roleOptions=[
                   onClick={() => {
                     setShowReplaceModal(true);
                     setShowMatchListModal(false);
-                    setMatchToReplace(match);
+                    matchToReplaceRef.current = match;
                   }}
                 >
                   Rejeter
@@ -912,7 +927,7 @@ const roleOptions=[
     <Button
       disabled={!newReferee}
       onClick={() => {
-        handleReplaceReferee(matchToReplace, newReferee);
+        handleReplaceReferee(matchToReplaceRef.current, newReferee);
         setShowReplaceModal(false);
         setShowMatchListModal(true);
         setNewReferee(null);
@@ -1353,7 +1368,7 @@ const roleOptions=[
                     <p className="text-gray-500 dark:text-gray-400 dark:text-flashscore-muted">Aucun barème trouvé</p>
                   </div>
                 ):(
-                <Table headers={["Catégorie", "Compétition", "Montant", "Role", "Date d'effet", "Saison", "Actions"]}>
+                <Table headers={["Catégorie", "Compétition", "Montant", "Role", "Actions"]}>
                   {rates
                     .map((rate) => (
                       <TableRow key={rate._id}>
@@ -1374,21 +1389,20 @@ const roleOptions=[
                           <span className="text-gray-600 dark:text-gray-400 dark:text-flashscore-muted">{roleMapper[rate.role] || rate.role || '-'}</span>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-gray-600 dark:text-gray-400 dark:text-flashscore-muted">
-                            {new Date(rate.effectiveFrom).toLocaleDateString('fr-FR')}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-gray-600 dark:text-gray-400 dark:text-flashscore-muted">{rate.saison}</span>
-                        </TableCell>
-                        <TableCell>
                           <div className="flex gap-2 justify-center">
                             <button
                               onClick={() => openEditModal(rate)}
-                              className="p-1 hover:text-blue-600 hover:bg-blue-50 rounded"
+                              className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
                               title="Modifier"
                             >
                               <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRate(rate._id)}
+                              className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </button>
                             
                           </div>
@@ -1419,8 +1433,6 @@ const roleOptions=[
                 competition: 'LIGUE_1',
                 amount: '',
                 role: '',
-                effectiveFrom: '',
-                effectiveTo: '',
                 saison: getSaisonFromDate(),
               });
             }}
@@ -1464,17 +1476,6 @@ const roleOptions=[
                     disabled: !!selectedRate,
                     options: roleOptions,
                   },
-                  {
-                    name: 'effectiveFrom',
-                    label: "Date d'effet",
-                    type: 'date',
-                    disabled: !!selectedRate,
-                  },
-                  {
-                    name: 'effectiveTo',
-                    label: "Date de fin d'effet",
-                    type: 'date',
-                  },
 
                 ]}
                 formData={rateForm}
@@ -1496,8 +1497,6 @@ const roleOptions=[
                       competition: 'LIGUE_1',
                       amount: '',
                       role: '',
-                      effectiveFrom: '',
-                      effectiveTo: '',
                       saison: getSaisonFromDate(),
                     });
                   }}

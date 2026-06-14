@@ -6,6 +6,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { User } from './users/schemas/user.schema';
 import { Referee } from './referees/schemas/referee.schema';
 import { Team } from './teams/schemas/team.schema';
+import { PaymentRate } from './payments/schemas/payment-rate.schema';
 import * as bcrypt from 'bcrypt';
 
 async function seed() {
@@ -14,6 +15,7 @@ async function seed() {
   const userModel = app.get(getModelToken(User.name));
   const refereeModel = app.get(getModelToken(Referee.name));
   const teamModel = app.get(getModelToken(Team.name));
+  const paymentRateModel = app.get(getModelToken(PaymentRate.name));
 
   const createUser = async (userData: any) => {
     try {
@@ -62,32 +64,36 @@ async function seed() {
       
       const existingUser = await userModel.findOne({ email });
       if (!existingUser) {
-        const user = await userModel.create({
-          email,
-          password: defaultPassword,
-          role: Role.ARBITRE,
-          firstName,
-          lastName,
-          phoneNumber: generateRandomPhone(),
-          isActive: true
-        });
+        try {
+          const user = await userModel.create({
+            email,
+            password: defaultPassword,
+            role: Role.ARBITRE,
+            firstName,
+            lastName,
+            phoneNumber: generateRandomPhone(),
+            isActive: true
+          });
 
-        // Determine category & roles
-        const category = isFemale ? RefereeCategory.FEMININE : generateRandomItem(categories.filter(c => c !== RefereeCategory.FEMININE));
-        const numRoles = Math.floor(Math.random() * 3) + 1;
-        const allowedRoles = Array.from(new Set(Array.from({ length: numRoles }, () => generateRandomItem(roles))));
+          // Determine category & roles
+          const category = isFemale ? RefereeCategory.FEMININE : generateRandomItem(categories.filter(c => c !== RefereeCategory.FEMININE));
+          const numRoles = Math.floor(Math.random() * 3) + 1;
+          const allowedRoles = Array.from(new Set(Array.from({ length: numRoles }, () => generateRandomItem(roles))));
 
-        await refereeModel.create({
-          userId: user._id,
-          matricule: generateRandomMatricule(),
-          category,
-          league: `Ligue de ${generateRandomItem(regions)}`,
-          region: generateRandomItem(regions),
-          dateOfBirth: new Date(1980 + Math.floor(Math.random() * 20), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28)),
-          cin: Math.floor(10000000 + Math.random() * 89999999).toString(),
-          isVARCertified: Math.random() > 0.8, // 20% VAR certified
-          isAvailable: true,
-        });
+          await refereeModel.create({
+            userId: user._id,
+            matricule: generateRandomMatricule(),
+            category,
+            league: `Ligue de ${generateRandomItem(regions)}`,
+            region: generateRandomItem(regions),
+            dateOfBirth: new Date(1980 + Math.floor(Math.random() * 20), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28)),
+            cin: Math.floor(10000000 + Math.random() * 89999999).toString(),
+            isVARCertified: Math.random() > 0.8, // 20% VAR certified
+            isAvailable: true,
+          });
+        } catch (err: any) {
+           console.log(`Failed to create referee for ${email}: ${err.message}`);
+        }
       }
     }
 
@@ -136,6 +142,60 @@ async function seed() {
         console.log(`Team already exists: ${teamData.name}`);
       }
     }
+
+    console.log('Generating Payment Rates...');
+    const adminUser = await userModel.findOne({ email: 'admin@dna.tn' });
+    
+    const compCategoryMap: Record<string, RefereeCategory> = {
+      [Competition.LIGUE1]: RefereeCategory.A,
+      [Competition.LIGUE2]: RefereeCategory.B,
+      [Competition.COUPE]: RefereeCategory.A,
+      [Competition.AMATEUR_C1]: RefereeCategory.C1,
+      [Competition.AMATEUR_C2]: RefereeCategory.C2,
+      [Competition.JEUNES]: RefereeCategory.JEUNE,
+      [Competition.FEMININE]: RefereeCategory.FEMININE,
+      [Competition.REGIONAL]: RefereeCategory.REGIONAL,
+    };
+    
+    for (const comp of Object.values(Competition)) {
+      const cat = compCategoryMap[comp];
+      if (!cat) continue;
+
+      for (const role of roles) {
+        let base = 100;
+        if (comp === Competition.LIGUE1) base = 500;
+        else if (comp === Competition.LIGUE2) base = 300;
+        else if (comp === Competition.COUPE) base = 400;
+        else if (comp === Competition.AMATEUR_C1) base = 150;
+        else if (comp === Competition.AMATEUR_C2) base = 100;
+        else if (comp === Competition.JEUNES) base = 50;
+        else if (comp === Competition.FEMININE) base = 80;
+        else if (comp === Competition.REGIONAL) base = 60;
+        
+        if (role === RefereeRole.ARBITRE_CENTRAL) base *= 1;
+        else if (role === RefereeRole.QUATRIEME_ARBITRE) base *= 0.5;
+        else base *= 0.8; // assistants & VAR
+
+        const amount = Math.round(base);
+
+        const existingRate = await paymentRateModel.findOne({
+          competition: comp,
+          category: cat,
+          role: role
+        });
+
+        if (!existingRate && adminUser) {
+          await paymentRateModel.create({
+            category: cat,
+            competition: comp,
+            role: role,
+            amount: amount,
+            createdBy: adminUser._id
+          });
+        }
+      }
+    }
+    console.log('Payment rates generation completed.');
 
     console.log('Seed completed successfully!');
   } catch (error: any) {

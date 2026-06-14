@@ -231,7 +231,7 @@ export class RegionalPDFService {
   ): Promise<Buffer> {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const categories = ['A', 'B', 'C'];
+    const categories = ['A', 'B', 'C1', 'C2'];
     const categoryPDFs: any[] = [];
 
     for (const category of categories) {

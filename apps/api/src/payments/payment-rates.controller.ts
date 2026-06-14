@@ -7,6 +7,7 @@ import {
   Param,
   Query,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -106,5 +107,16 @@ export class PaymentRatesController {
   @ApiResponse({ status: 200, description: 'Payment rate updated successfully' })
   update(@Param('id') id: string, @Body() updateDto: UpdatePaymentRateDto) {
     return this.paymentRatesService.update(id, updateDto);
+  }
+
+  @Delete(':id')
+  @Roles(Role.FINANCE_DNA, Role.ADMIN_DNA)
+  @ApiOperation({
+    summary: 'Delete payment rate',
+    description: 'Delete a payment rate entirely.',
+  })
+  @ApiResponse({ status: 200, description: 'Payment rate deleted successfully' })
+  remove(@Param('id') id: string) {
+    return this.paymentRatesService.remove(id);
   }
 }

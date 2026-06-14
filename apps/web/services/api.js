@@ -192,7 +192,7 @@ export const api = {
     takeControl: (id, data) => base.post(buildApiUrl(API_ROUTES.DESIGNATIONS.TAKE_CONTROL, { id }), data),
     getOverrideHistory: (id) => base.get(buildApiUrl(API_ROUTES.DESIGNATIONS.OVERRIDE_HISTORY, { id })),
     revertOverride: (id, data) => base.post(buildApiUrl(API_ROUTES.DESIGNATIONS.REVERT_OVERRIDE, { id }), data),
-    getEligibleReferees: (matchId) => base.get(buildApiUrl(API_ROUTES.DESIGNATIONS.GET_ELIGIBLE_REFEREES, { matchId })),
+    getEligibleReferees: (matchId, params) => base.get(buildApiUrl(API_ROUTES.DESIGNATIONS.GET_ELIGIBLE_REFEREES, { matchId }), { params }),
   },
 
   availability: {
@@ -254,6 +254,7 @@ export const api = {
     calculate: (params) => base.get(API_ROUTES.PAYMENT_RATES.CALCULATE, { params }),
     getOne: (id) => base.get(buildApiUrl(API_ROUTES.PAYMENT_RATES.GET_ONE, { id })),
     update: (id, data) => base.patch(buildApiUrl(API_ROUTES.PAYMENT_RATES.UPDATE, { id }), data),
+    delete: (id) => base.delete(buildApiUrl(API_ROUTES.PAYMENT_RATES.DELETE, { id })),
   },
 
   matchPayments: {

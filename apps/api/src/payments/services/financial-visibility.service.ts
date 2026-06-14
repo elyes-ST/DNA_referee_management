@@ -74,7 +74,8 @@ export class FinancialVisibilityService {
     const grouped = {
       A: payments.filter((p) => p.category === RefereeCategory.A),
       B: payments.filter((p) => p.category === RefereeCategory.B),
-      C: payments.filter((p) => p.category === RefereeCategory.C),
+      C1: payments.filter((p) => p.category === RefereeCategory.C1),
+      C2: payments.filter((p) => p.category === RefereeCategory.C2),
       totals: {
         A: payments
           .filter((p) => p.category === RefereeCategory.A)
@@ -82,8 +83,11 @@ export class FinancialVisibilityService {
         B: payments
           .filter((p) => p.category === RefereeCategory.B)
           .reduce((sum, p) => sum + p.totalAmount, 0),
-        C: payments
-          .filter((p) => p.category === RefereeCategory.C)
+        C1: payments
+          .filter((p) => p.category === RefereeCategory.C1)
+          .reduce((sum, p) => sum + p.totalAmount, 0),
+        C2: payments
+          .filter((p) => p.category === RefereeCategory.C2)
           .reduce((sum, p) => sum + p.totalAmount, 0),
         overall: payments.reduce((sum, p) => sum + p.totalAmount, 0),
       },
@@ -192,17 +196,30 @@ export class FinancialVisibilityService {
           (p) => p.category === RefereeCategory.B && p.status === 'VALIDATED',
         ).length,
       },
-      C: {
-        count: allPayments.filter((p) => p.category === RefereeCategory.C)
+      C1: {
+        count: allPayments.filter((p) => p.category === RefereeCategory.C1)
           .length,
         total: allPayments
-          .filter((p) => p.category === RefereeCategory.C)
+          .filter((p) => p.category === RefereeCategory.C1)
           .reduce((sum, p) => sum + p.totalAmount, 0),
         pending: allPayments.filter(
-          (p) => p.category === RefereeCategory.C && p.status === 'PENDING',
+          (p) => p.category === RefereeCategory.C1 && p.status === 'PENDING',
         ).length,
         validated: allPayments.filter(
-          (p) => p.category === RefereeCategory.C && p.status === 'VALIDATED',
+          (p) => p.category === RefereeCategory.C1 && p.status === 'VALIDATED',
+        ).length,
+      },
+      C2: {
+        count: allPayments.filter((p) => p.category === RefereeCategory.C2)
+          .length,
+        total: allPayments
+          .filter((p) => p.category === RefereeCategory.C2)
+          .reduce((sum, p) => sum + p.totalAmount, 0),
+        pending: allPayments.filter(
+          (p) => p.category === RefereeCategory.C2 && p.status === 'PENDING',
+        ).length,
+        validated: allPayments.filter(
+          (p) => p.category === RefereeCategory.C2 && p.status === 'VALIDATED',
         ).length,
       },
     };

@@ -76,7 +76,6 @@ const RoleColorMapper: Record<string, string> = {
 const CategoryColorMapper: Record<string, string> = {
   A: "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20",
   B: "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20",
-  C: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20",
   C1: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20",
   C2: "bg-orange-50 text-orange-700 ring-1 ring-inset ring-orange-600/20",
   JEUNE: "bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20",
@@ -87,7 +86,6 @@ const CategoryColorMapper: Record<string, string> = {
 const CategoryLabelMapper: Record<string, string> = {
   A: "A",
   B: "B",
-  C: "C",
   C1: "C1",
   C2: "C2",
   JEUNE: "Jeune",

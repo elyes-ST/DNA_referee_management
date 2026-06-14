@@ -89,7 +89,7 @@ export class PaymentsService {
         warnings.push(
           `Match ${(match as any).matchNumber || match._id} — ` +
           `aucun barème configuré pour rôle "${designation.role}" ` +
-          `(catégorie arbitre + compétition + saison).`,
+          `(catégorie arbitre + compétition).`,
         );
         continue; // skip creating the record
       }

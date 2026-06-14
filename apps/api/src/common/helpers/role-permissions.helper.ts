@@ -8,7 +8,7 @@ import { Role, RefereeCategory } from '../enums';
 export function getAllowedCategoriesForRole(role: string): string[] | null {
   switch (role) {
     case Role.CAA:
-      return [RefereeCategory.C, RefereeCategory.C1, RefereeCategory.C2];
+      return [RefereeCategory.C1, RefereeCategory.C2];
     case Role.CAJ:
       return [RefereeCategory.JEUNE];
     case Role.CAF:

@@ -94,7 +94,6 @@ const Communication = () => {
     const categoryOptions = [
         { value:'A', label: 'Catégorie A' },
         { value:'B', label: 'Catégorie B' },
-        { value:'C', label: 'Catégorie C' },
         { value:'AMATEUR_C1', label: 'Amateur C1' },
         { value:'AMATEUR_C2', label: 'Amateur C2' },
         { value:'JEUNE', label: 'Jeune' },

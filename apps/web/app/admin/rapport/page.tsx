@@ -107,7 +107,7 @@ const Rapports = () => {
         const response = await api.inspectors.getAll({
         search: inputValue,
         page: 1,
-        limit: 10,
+        limit: 1000,
     });
 
         const data = response.data.data || [];
@@ -130,7 +130,7 @@ const loadInspectorOptions = (inputValue: string) =>
     const response = await api.referees.getAll({
         search: inputValue,
         page: 1,
-        limit: 10,
+        limit: 1000,
     });
 
     const data = response.data.data || [];
@@ -155,7 +155,7 @@ const debouncedLoadMatchOptions = useCallback(
     const response = await api.matches.getAll({
         team: inputValue,
         page: 1,
-        limit: 10,
+        limit: 1000,
     });
 
     const data = response.data.data || [];

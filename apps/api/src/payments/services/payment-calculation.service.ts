@@ -54,9 +54,6 @@ export class PaymentCalculationService {
         category: referee.category,
         competition: match.competition,
         role,
-        saison: match.saison,
-        effectiveFrom: { $lte: match.date },
-        $or: [{ effectiveTo: { $gte: match.date } }, { effectiveTo: null }],
       })
       .exec();
 

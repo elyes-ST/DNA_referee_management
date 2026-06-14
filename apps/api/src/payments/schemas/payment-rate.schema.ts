@@ -18,15 +18,6 @@ export class PaymentRate {
   @Prop({ required: true })
   amount: number;
 
-  @Prop({ required: true, index: true })
-  saison: string;
-
-  @Prop({ type: Date, required: true })
-  effectiveFrom: Date;
-
-  @Prop({ type: Date })
-  effectiveTo: Date;
-
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   createdBy: Types.ObjectId;
 
@@ -44,6 +35,4 @@ PaymentRateSchema.index({
   category: 1,
   competition: 1,
   role: 1,
-  saison: 1,
 });
-PaymentRateSchema.index({ effectiveFrom: 1, effectiveTo: 1 });

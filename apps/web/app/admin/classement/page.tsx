@@ -100,7 +100,6 @@ const Classement = () => {
         const labels: Record<string, string> = {
             'A': 'Catégorie A ',
             'B': 'Catégorie B ',
-            'C': 'Catégorie C ',
             'C1': 'Catégorie Amateur C1 ',
             'C2': 'Catégorie Amateur C2 ',
             'Jeune': 'Catégorie Jeunes ',
@@ -120,7 +119,7 @@ const Classement = () => {
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-2 mb-6 border-b border-gray-100 dark:border-flashscore-border overflow-x-auto">
-                    {['A', 'B', 'C', 'C1', 'C2', 'Jeune', 'Féminine', 'Regional'].map(g => (
+                    {['A', 'B', 'C1', 'C2', 'Jeune', 'Féminine', 'Regional'].map(g => (
                         <button
                             key={g}
                             onClick={() => handleCategoryChange(g)}
