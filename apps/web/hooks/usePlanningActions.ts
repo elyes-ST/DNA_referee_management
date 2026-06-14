@@ -46,9 +46,22 @@ export const usePlanningActions = (
       try {
         const formData = new FormData();
         formData.append('file', file);
-        await api.matches.import(formData);
+        const response = await api.matches.import(formData);
+        const result = response.data;
+        
         await refetchMatches();
-        toast.success('Matchs importés avec succès');
+        
+        if (result.failed > 0) {
+          console.error("Erreurs d'import:", result.errors);
+          const firstError = result.errors[0]?.error || "Erreur inconnue";
+          toast.error(`${result.failed} matchs n'ont pas pu être importés. (ex: ${firstError})`);
+        }
+        
+        if (result.success > 0) {
+          toast.success(`${result.success} matchs importés avec succès`);
+        } else if (result.failed === 0) {
+          toast.info("Aucun match à importer ou format invalide.");
+        }
       } catch (err) {
         let errorMessage = "Une erreur est survenue lors de l'import du fichier CSV.";
         if (err && typeof err === "object" && "response" in err) {

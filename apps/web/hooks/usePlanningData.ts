@@ -48,7 +48,7 @@ export const usePlanningData = (
       const params: any = {
         competition: activeCompetitionFilter !== "Tous" ? activeCompetitionFilter : undefined,
         status: mappedStatus,
-        saison: getSaisonFromDate(),
+        // saison: getSaisonFromDate(), // On désactive ce filtre strict pour voir tous les matchs importés
         page: currentPage,
         limit: itemsPerPage
       };

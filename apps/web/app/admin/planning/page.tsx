@@ -87,7 +87,7 @@ const Planning = () => {
   );
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date(Date.now()));
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 40;
 
   // Keep competition filter synced when user loads asynchronously
   useEffect(() => {
