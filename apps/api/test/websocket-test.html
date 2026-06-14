@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebSocket Notifications Test</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #log { background: #f5f5f5; padding: 15px; border-radius: 5px; max-height: 400px; overflow-y: auto; }
+    .log-entry { margin: 5px 0; padding: 8px; background: white; border-radius: 3px; }
+    .success { border-left: 3px solid green; }
+    .error { border-left: 3px solid red; }
+    .notification { border-left: 3px solid blue; background: #e3f2fd; }
+    input, button { padding: 10px; margin: 5px; font-size: 14px; }
+    button { background: #1976d2; color: white; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>🔔 Test WebSocket Notifications</h1>
+  
+  <div>
+    <input type="text" id="token" placeholder="JWT Token" style="width: 400px;">
+    <button onclick="connect()">Connecter</button>
+    <button onclick="disconnect()">Déconnecter</button>
+  </div>
+  
+  <h3>Status: <span id="status">Déconnecté</span></h3>
+  
+  <div id="log"></div>
+  
+  <script>
+    let socket = null;
+    
+    function log(message, type = '') {
+      const logDiv = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry ' + type;
+      entry.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+    
+    function connect() {
+      const token = document.getElementById('token').value;
+      if (!token) {
+        log('❌ Veuillez entrer un token JWT', 'error');
+        return;
+      }
+      
+      log('🔄 Connexion en cours...');
+      
+      socket = io('http://localhost:3000/notifications', {
+        auth: { token },
+        transports: ['websocket']
+      });
+      
+      socket.on('connect', () => {
+        document.getElementById('status').textContent = '✅ Connecté';
+        document.getElementById('status').style.color = 'green';
+        log('✅ Connecté au serveur WebSocket!', 'success');
+      });
+      
+      socket.on('disconnect', (reason) => {
+        document.getElementById('status').textContent = '❌ Déconnecté';
+        document.getElementById('status').style.color = 'red';
+        log('❌ Déconnecté: ' + reason, 'error');
+      });
+      
+      socket.on('connect_error', (error) => {
+        log('❌ Erreur de connexion: ' + error.message, 'error');
+      });
+      
+      // Écouter les notifications
+      socket.on('notification', (data) => {
+        log(`🔔 <strong>${data.title}</strong><br>${data.message}`, 'notification');
+        console.log('Notification reçue:', data);
+      });
+      
+      // Écouter les broadcasts
+      socket.on('broadcast', (data) => {
+        log(`📢 <strong>Broadcast:</strong> ${JSON.stringify(data)}`, 'notification');
+      });
+    }
+    
+    function disconnect() {
+      if (socket) {
+        socket.disconnect();
+        socket = null;
+        log('🔌 Déconnexion manuelle');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:6.0
+    container_name: dna-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-password}
+      MONGO_INITDB_DATABASE: dna-referee-management
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - dna-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok", "localhost:27017/test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+
+
+  # NestJS Backend API
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: dna-api
+    restart: unless-stopped
+    ports:
+      - "3003:3000"
+    env_file:
+      - apps/api/.env
+    environment:
+      MONGODB_URI: mongodb://root:${MONGODB_PASSWORD:-password}@mongodb:27017/dna-referee-management?authSource=admin
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - dna-network
+
+
+  # Next.js Frontend
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: dna-web
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - api
+    networks:
+      - dna-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+
+networks:
+  dna-network:
+    driver: bridge

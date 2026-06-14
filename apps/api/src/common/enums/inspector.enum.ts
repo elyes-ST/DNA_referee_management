@@ -1,0 +1,35 @@
+/**
+ * Inspector-related enumerations for the inspector reports module
+ */
+
+export enum InspectionType {
+  BEFORE_MATCH = 'BEFORE_MATCH',
+  DURING_MATCH = 'DURING_MATCH',
+  POST_MATCH = 'POST_MATCH',
+  FULL_INSPECTION = 'FULL_INSPECTION',
+}
+
+export enum InspectorVerdict {
+  EXCELLENT = 'EXCELLENT',
+  VERY_GOOD = 'VERY_GOOD',
+  GOOD = 'GOOD',
+  SATISFACTORY = 'SATISFACTORY',
+  NEEDS_IMPROVEMENT = 'NEEDS_IMPROVEMENT',
+  INSUFFICIENT = 'INSUFFICIENT',
+}
+
+export enum PromotionRecommendation {
+  STRONGLY_RECOMMENDED = 'STRONGLY_RECOMMENDED',
+  RECOMMENDED = 'RECOMMENDED',
+  NEUTRAL = 'NEUTRAL',
+  NOT_READY = 'NOT_READY',
+  DEMOTION_SUGGESTED = 'DEMOTION_SUGGESTED',
+}
+
+export enum InspectorReportStatus {
+  DRAFT = 'DRAFT',
+  SUBMITTED = 'SUBMITTED',
+  REVIEWED = 'REVIEWED',
+  VALIDATED = 'VALIDATED',
+  ARCHIVED = 'ARCHIVED',
+}

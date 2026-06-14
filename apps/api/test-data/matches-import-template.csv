@@ -1,0 +1,52 @@
+matchNumber,journee,saison,date,time,homeTeam,awayTeam,stadium,competition,category
+M001,1,2025-2026,2026-06-15,20:00,AS Marsa,Club Africain,Stade Hammadi Agrebi,LIGUE1,A
+M002,1,2025-2026,2026-06-15,17:00,AS Marsa,Club Africain,Stade Olympique de Sousse,LIGUE1,A
+M003,1,2025-2026,2026-06-16,15:00,US Monastir,CA Bizertin,Stade Mustapha Ben Jannet,LIGUE1,A
+M004,2,2025-2026,2026-06-22,20:00,Club Africain,AS Marsa,Stade Olympique de Rades,LIGUE1,A
+M005,2,2025-2026,2026-06-22,17:00,AS Marsa,CA Bizertin,Stade Taieb Mhiri,LIGUE1,A
+M006,2,2025-2026,2026-06-23,15:00,CA Bizertin,US Monastir,Stade 15 Octobre,LIGUE1,A
+M007,3,2025-2026,2026-06-01,20:00,CA Bizertin,US Monastir,Stade Hammadi Agrebi,LIGUE1,A
+M008,3,2025-2026,2026-06-01,17:00,CA Bizertin,CA Bizertin,Stade Olympique de Sousse,LIGUE1,A
+M009,3,2025-2026,2026-06-02,15:00,US Monastir,Club Africain,Stade Taieb Mhiri,LIGUE1,A
+M010,1,2025-2026,2026-06-15,20:00,AS Marsa,Club Africain,Stade Hammadi Agrebi,LIGUE2,B
+M011,1,2025-2026,2026-06-15,17:00,US Monastir,CA Bizertin,Stade Mustapha Ben Jannet,LIGUE2,B
+M012,1,2025-2026,2026-06-16,15:00,Club Africain,US Monastir,Stade Olympique de Rades,LIGUE2,B
+M013,1,2025-2026,2026-06-15,20:00,AS Marsa,CA Bizertin,Stade Taieb Mhiri,COUPE,A
+M014,1,2025-2026,2026-06-15,17:00,Club Africain,US Monastir,Stade Olympique de Rades,COUPE,A
+M015,1,2025-2026,2026-06-16,15:00,CA Bizertin,AS Marsa,Stade 15 Octobre,COUPE,A
+M016,1,2025-2026,2026-06-15,20:00,AS Marsa,Club Africain,Stade Hammadi Agrebi,AMATEUR_C1,C1
+M017,1,2025-2026,2026-06-15,17:00,US Monastir,CA Bizertin,Stade Mustapha Ben Jannet,AMATEUR_C1,C1
+M018,1,2025-2026,2026-06-16,15:00,Club Africain,CA Bizertin,Stade Olympique de Rades,AMATEUR_C1,C1
+M019,2,2025-2026,2026-06-22,20:00,Club Africain,AS Marsa,Stade Olympique de Rades,AMATEUR_C1,C1
+M020,2,2025-2026,2026-06-22,17:00,CA Bizertin,US Monastir,Stade 15 Octobre,AMATEUR_C1,C1
+M021,2,2025-2026,2026-06-23,15:00,AS Marsa,CA Bizertin,Stade Taieb Mhiri,AMATEUR_C1,C1
+M022,1,2025-2026,2026-06-15,20:00,AS Marsa,Club Africain,Stade Hammadi Agrebi,AMATEUR_C2,C2
+M023,1,2025-2026,2026-06-15,17:00,US Monastir,CA Bizertin,Stade Mustapha Ben Jannet,AMATEUR_C2,C2
+M024,1,2025-2026,2026-06-16,15:00,Club Africain,US Monastir,Stade Olympique de Rades,AMATEUR_C2,C2
+M025,2,2025-2026,2026-06-22,20:00,CA Bizertin,AS Marsa,Stade 15 Octobre,AMATEUR_C2,C2
+M026,2,2025-2026,2026-06-22,17:00,Club Africain,CA Bizertin,Stade Olympique de Rades,AMATEUR_C2,C2
+M027,2,2025-2026,2026-06-23,15:00,US Monastir,Club Africain,Stade Mustapha Ben Jannet,AMATEUR_C2,C2
+M028,1,2025-2026,2026-06-15,20:00,AS Marsa,Club Africain,Stade Hammadi Agrebi,JEUNES,JEUNE
+M029,1,2025-2026,2026-06-15,17:00,US Monastir,CA Bizertin,Stade Mustapha Ben Jannet,JEUNES,JEUNE
+M030,1,2025-2026,2026-06-16,15:00,Club Africain,US Monastir,Stade Olympique de Rades,JEUNES,JEUNE
+M037,2,2025-2026,2026-06-22,20:00,Club Africain,AS Marsa,Stade Olympique de Rades,FEMININE,FEMININE
+M038,2,2025-2026,2026-06-22,17:00,CA Bizertin,US Monastir,Stade 15 Octobre,FEMININE,FEMININE
+M039,2,2025-2026,2026-06-23,15:00,US Monastir,Club Africain,Stade Mustapha Ben Jannet,FEMININE,FEMININE
+M040,3,2025-2026,2026-06-01,20:00,AS Marsa,CA Bizertin,Stade Hammadi Agrebi,FEMININE,FEMININE
+M041,3,2025-2026,2026-06-01,17:00,Club Africain,US Monastir,Stade Olympique de Rades,FEMININE,FEMININE
+M042,3,2025-2026,2026-06-02,15:00,CA Bizertin,Club Africain,Stade 15 Octobre,FEMININE,FEMININE
+M043,4,2025-2026,2026-06-15,20:00,US Monastir,AS Marsa,Stade Mustapha Ben Jannet,FEMININE,FEMININE
+M044,4,2025-2026,2026-06-15,17:00,Club Africain,CA Bizertin,Stade Olympique de Rades,FEMININE,FEMININE
+M045,4,2025-2026,2026-06-16,15:00,AS Marsa,Club Africain,Stade Hammadi Agrebi,FEMININE,FEMININE
+M046,1,2025-2026,2026-06-15,20:00,AS Marsa,Club Africain,Stade Hammadi Agrebi,REGIONAL,REGIONAL
+M047,1,2025-2026,2026-06-15,17:00,US Monastir,CA Bizertin,Stade Olympique de Sousse,REGIONAL,REGIONAL
+M048,1,2025-2026,2026-06-16,15:00,Club Africain,CA Bizertin,Stade Mustapha Ben Jannet,REGIONAL,REGIONAL
+M049,2,2025-2026,2026-06-22,20:00,CA Bizertin,AS Marsa,Stade 15 Octobre,REGIONAL,REGIONAL
+M050,2,2025-2026,2026-06-22,17:00,Club Africain,US Monastir,Stade Taieb Mhiri,REGIONAL,REGIONAL
+M051,2,2025-2026,2026-06-23,15:00,US Monastir,AS Marsa,Stade Hammadi Agrebi,REGIONAL,REGIONAL
+M052,3,2025-2026,2026-06-01,20:00,AS Marsa,CA Bizertin,Stade Olympique de Rades,REGIONAL,REGIONAL
+M053,3,2025-2026,2026-06-01,17:00,Club Africain,US Monastir,Stade Mustapha Ben Jannet,REGIONAL,REGIONAL
+M054,3,2025-2026,2026-06-02,15:00,CA Bizertin,Club Africain,Stade Hammadi Agrebi,REGIONAL,REGIONAL
+M055,4,2025-2026,2026-06-28,20:00,US Monastir,CA Bizertin,Stade Taieb Mhiri,REGIONAL,REGIONAL
+M056,4,2025-2026,2026-06-28,17:00,AS Marsa,Club Africain,Stade Olympique de Sousse,REGIONAL,REGIONAL
+M057,4,2025-2026,2026-06-29,15:00,Club Africain,US Monastir,Stade 15 Octobre,REGIONAL,REGIONAL

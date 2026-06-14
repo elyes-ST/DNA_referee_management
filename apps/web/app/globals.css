@@ -1,0 +1,42 @@
+
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-flashscore-base: #0a0a0a;
+  --color-flashscore-card: #181818;
+  --color-flashscore-border: #2a2a2a;
+  --color-flashscore-hover: #222222;
+  --color-flashscore-text: #ffffff;
+  --color-flashscore-muted: #a0a0a0;
+  --color-flashscore-accent: #ce1126;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #ce1126;
+  --primary-dark: #a20e1f;
+  --primary-light: #e8384d;
+}
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 dark:bg-flashscore-base dark:text-flashscore-text;
+  }
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}

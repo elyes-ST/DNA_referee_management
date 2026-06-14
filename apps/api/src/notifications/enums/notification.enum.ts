@@ -1,0 +1,58 @@
+export enum NotificationType {
+  // Désignations
+  DESIGNATION_ASSIGNED = 'DESIGNATION_ASSIGNED',
+  DESIGNATION_UPDATED = 'DESIGNATION_UPDATED',
+  DESIGNATION_CANCELLED = 'DESIGNATION_CANCELLED',
+
+  // Convocations
+  CONVOCATION_INVITED = 'CONVOCATION_INVITED',
+  CONVOCATION_REMINDER = 'CONVOCATION_REMINDER',
+
+  // Rappels
+  MATCH_REMINDER = 'MATCH_REMINDER',
+  SEMINAR_REMINDER = 'SEMINAR_REMINDER',
+
+  // Excuses/Blessures
+  AVAILABILITY_REPORTED = 'AVAILABILITY_REPORTED', // Pour CRA
+  AVAILABILITY_RESPONSE = 'AVAILABILITY_RESPONSE', // Pour Arbitre
+  EXCUSE_RECEIVED = 'EXCUSE_RECEIVED', // Alias pour CRA
+
+  // Rapports
+  INSPECTOR_REPORT_SUBMITTED = 'INSPECTOR_REPORT_SUBMITTED', // Pour Admin DNA (rapport CDC)
+  INSPECTOR_REPORT = 'INSPECTOR_REPORT', // Rapport d'inspection pour arbitre
+
+  // Paiements
+  PAYMENT_VALIDATED = 'PAYMENT_VALIDATED',
+  PAYMENT_BILAN_SENT = 'PAYMENT_BILAN_SENT',
+
+  // Évolution
+  CATEGORY_CHANGE = 'CATEGORY_CHANGE', // Changement de catégorie
+
+  // Formation
+  TRAINING_RESOURCE_NEW = 'TRAINING_RESOURCE_NEW', // Nouvelle ressource de formation
+
+  // Général
+  ANNOUNCEMENT = 'ANNOUNCEMENT', // Messages groupés Admin
+  SYSTEM = 'SYSTEM',
+}
+
+export enum NotificationChannel {
+  IN_APP = 'IN_APP',
+  WHATSAPP = 'WHATSAPP',
+  EMAIL = 'EMAIL',
+}
+
+export enum NotificationPriority {
+  LOW = 'LOW',
+  NORMAL = 'NORMAL',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT',
+}
+
+export enum NotificationStatus {
+  PENDING = 'PENDING',
+  SENT = 'SENT',
+  DELIVERED = 'DELIVERED',
+  READ = 'READ',
+  FAILED = 'FAILED',
+}

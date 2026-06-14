@@ -1,0 +1,62 @@
+---
+- hosts: dev
+  become: yes
+  tasks:
+    - name: Login to GitLab Registry
+      shell: echo "{{ gitlab_token }}" | docker login -u gitlab-ci-token --password-stdin {{ gitlab_registry }}
+    - name: Pull Docker image
+      docker_image:
+        name: "{{ docker_image }}"
+        source: pull
+
+    
+    - name: Check if container exists
+      docker_container_info:
+        name: "{{ c_name }}"
+      register: container_info
+      ignore_errors: yes
+
+    - name: Stop and remove existing container if it exists
+      docker_container:
+        name: dna-dev
+        state: absent 
+      when: container_info.container is defined
+      
+    - name: Create docker network
+      docker_network:
+        name: "{{ network_name }}"
+        ipam_config:
+          - subnet: "{{ net_id }}.0/16"
+            gateway: "{{ net_id }}.1"    
+    - name: Create shared dna-network for monitoring
+      docker_network:
+        name: "dna-network"
+        ipam_config:
+          - subnet: "172.19.0.0/16"
+            gateway: "172.19.0.1"
+        state: present
+      ignore_errors: yes
+    - name: Run new container
+      docker_container:
+        name: "{{ c_name }}"
+        image: "{{ image_name }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "3001:3000"
+        env:
+          NODE_ENV: development
+          MONGO_DB_URI: "{{ mongo_uri }}"
+        networks:
+          - name: "{{ network_name }}"
+            ipv4_address: "{{ net_id }}.{{ host_id }}"
+          - name: dna-network
+
+    - name: Include systemd service deployment
+      import_tasks: tasks/systemd_container.yml
+      vars:
+          container_list:
+            - "{{ c_name }}"
+          image_name: "{{ image_name }}"
+          h_name: "{{ h_name }}"
+          host_id: "{{ host_id }}"

@@ -1,0 +1,27 @@
+[prod]
+prod ansible_host=51.178.25.152 ansible_ssh_user=ubuntu ansible_python_interpreter=/usr/bin/python3
+
+[prod:vars]
+c_name= {{lookup('env','CI_PROJECT_NAME')}}-dna-prod
+h_name= {{lookup('env','CI_PROJECT_NAME')}}-dna-prod
+ansible_ssh_user=ubuntu
+ansible_ssh_pass={{ lookup('env', 'SERVER_TEST_PASSWORD') }}
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+ansible_python_interpreter=/usr/bin/python3
+ansible_host_key_checking=False
+registry_url={{ lookup('env','CI_REGISTRY') }}                    
+registry_user={{ lookup('env','GITLAB_REGISTRY_USER') }}     
+registry_password={{ lookup('env','GITLAB_REGISTRY_PASS') }}  
+image_name={{ lookup('env','CI_REGISTRY_IMAGE') }}:{{ lookup('env','CI_COMMIT_SHORT_SHA') }}-dna-prod
+net_id=172.33.0
+host_id=4
+container_port=3000
+branch_name=prod
+network_name=dna-prod
+
+
+[dna-prod_network:children]
+prod
+
+[dna-prod_clean:children]
+prod

@@ -1,0 +1,22 @@
+export enum Role {
+  ADMIN_DNA = 'ADMIN_DNA',
+  FINANCE_DNA = 'FINANCE_DNA',
+  DESIGNATION_DNA = 'DESIGNATION_DNA',
+  CAA = 'CAA',
+  CAJ = 'CAJ',
+  CAF = 'CAF',
+  CRA = 'CRA',
+  CDC = 'CDC',
+  CDE = 'CDE',
+  ARBITRE = 'ARBITRE',
+  INSPECTEUR = 'INSPECTEUR',
+}
+
+export interface User {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: Role;
+    phoneNumber?: string;
+    }

@@ -1,0 +1,5004 @@
+﻿{
+  "info": {
+    "name": "DNA Referee Management API",
+    "description": "API complète pour le système de gestion des arbitres DNA (Direction Nationale d'Arbitrage).\n\n## Modules Principaux\n\n### 🔐 Authentication\nConnexion, déconnexion, gestion des tokens JWT\n\n### 👤 Users & Referees\nGestion des utilisateurs et des profils arbitres\n\n### ⚽ Matches & Teams\nGestion des matchs et des équipes\n\n### 📋 Designations\nDésignation des arbitres aux matchs avec workflow de validation\n\n### 💰 Payments\nGestion des paiements et barèmes\n\n### 📊 Statistics\nClassements et analyses de performance des arbitres\n\n### 🎓 Training Resources\nRessources de formation (vidéos, documents) avec support pour vidéos personnalisées\n\n### 📅 Convocations\nConvocations aux séminaires et réunions\n\n### 🔔 Notifications\nNotifications temps réel (WebSocket + WhatsApp)\n\n### 📈 Dashboard\nPage d'accueil avec statistiques globales et graphiques\n\n### 👔 CDC - Inspectors\nGestion des inspecteurs (commissaires) par le CDC:\n- Création/gestion des inspecteurs\n- Affectations aux matchs\n- Rapports d'inspection\n\n---\n\n## Rôles & Accès\n\n| Rôle | Description |\n|------|-------------|\n| ADMIN_DNA | Administrateur - Accès total |\n| DESIGNATION_DNA | Gestion des désignations |\n| CDC | Commission des Commissaires - Gestion des inspecteurs |\n| CAA/CAJ/CAF | Comités par catégorie |\n| CRA | Président CRA régional |\n| ARBITRE | Arbitre (self-service limité) |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "description": "Endpoints d'authentification - Connexion, déconnexion, gestion des tokens.\n\nLe refresh token est stocké dans un cookie HttpOnly pour la sécurité.",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', response.access_token);",
+                  "    console.log('Login successful! Refresh token is stored in HttpOnly cookie.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@dna.tn\",\n  \"password\": \"Admin123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authentification utilisateur.\n\n**Retourne:** access_token (body) + refresh_token (HttpOnly cookie)\n\n**Accès:** Public"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', response.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Renouveler l'access token via le refresh token (cookie).\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Déconnexion - Invalide le refresh token et supprime le cookie.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/logout-all",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout-all"
+              ]
+            },
+            "description": "Déconnexion de tous les appareils.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@dna.tn\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/forgot-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Demander un lien de réinitialisation de mot de passe par email.\n\n**Accès:** Public"
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset-token-from-email\",\n  \"newPassword\": \"NewSecure@Pass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/reset-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Réinitialiser le mot de passe avec le token reçu par email.\n\n**Accès:** Public"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Users",
+      "description": "Gestion des utilisateurs du système.\n\n**Accès:** ADMIN_DNA",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@dna.tn\",\n  \"password\": \"Password123!\",\n  \"firstName\": \"Jean\",\n  \"lastName\": \"Dupont\",\n  \"role\": \"ARBITRE\",\n  \"phoneNumber\": \"+216 12 345 678\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Créer un nouvel utilisateur.\n\n**Rôles disponibles:** ADMIN_DNA, DESIGNATION_DNA, CDC, CAA, CAJ, CAF, CRA, ARBITRE\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Récupérer tous les utilisateurs.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get Users by Role",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/role/ARBITRE",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "role",
+                "ARBITRE"
+              ]
+            },
+            "description": "Récupérer les utilisateurs par rôle.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "Récupérer son propre profil utilisateur.\n\n**Accès:** Tous les utilisateurs authentifiés"
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"+216 98 765 432\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/users/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "Modifier son propre profil.\n\n**Accès:** Tous les utilisateurs authentifiés"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ]
+            },
+            "description": "Récupérer un utilisateur par ID.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Pierre\",\n  \"lastName\": \"Martin\",\n  \"phoneNumber\": \"+216 98 765 432\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/users/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ]
+            },
+            "description": "Modifier un utilisateur.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Toggle User Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/:id/toggle-status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                ":id",
+                "toggle-status"
+              ]
+            },
+            "description": "Activer/désactiver un utilisateur.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ]
+            },
+            "description": "Supprimer un utilisateur.\n\n**Accès:** ADMIN_DNA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚽ Referees",
+      "description": "Gestion des arbitres.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA (lecture)",
+      "item": [
+        {
+          "name": "Create Referee",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"referee@dna.tn\",\n  \"password\": \"Referee123!\",\n  \"firstName\": \"Jean\",\n  \"lastName\": \"Dupont\",\n  \"phoneNumber\": \"+216 12 345 678\",\n  \"matricule\": \"REF2026001\",\n  \"category\": \"B\",\n  \"region\": \"Tunis\",\n  \"dateOfBirth\": \"1990-05-15\",\n  \"cin\": \"12345678\",\n  \"address\": \"123 Avenue Habib Bourguiba, Tunis\",\n  \"league\": \"Ligue 1\",\n  \"emergencyContact\": {\n    \"name\": \"Marie Dupont\",\n    \"phone\": \"+216 20 123 456\"\n  },\n  \"allowedRoles\": [\"ARBITRE_CENTRAL\", \"ASSISTANT_1\", \"ASSISTANT_2\", \"QUATRIEME_ARBITRE\"],\n  \"isVARCertified\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/referees",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "referees"
+              ]
+            },
+            "description": "Créer un nouvel arbitre avec compte utilisateur.\n\n**Catégories:** ELITE, FIFA, A, B, C1, C2, C3\n**Rôles autorisés:** ARBITRE_CENTRAL, ASSISTANT_1, ASSISTANT_2, QUATRIEME_ARBITRE, ARBITRE_VAR, ASSISTANT_VAR\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get All Referees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/referees",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "referees"
+              ]
+            },
+            "description": "Récupérer tous les arbitres.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA, CAA, CAJ, CAF"
+          }
+        },
+        {
+          "name": "Get Referees by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/referees/category/B",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "referees",
+                "category",
+                "B"
+              ]
+            },
+            "description": "Récupérer les arbitres par catégorie.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA, CAA, CAJ, CAF"
+          }
+        },
+        {
+          "name": "Get Referee Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/referees/statistics",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "referees",
+                "statistics"
+              ]
+            },
+            "description": "Statistiques globales des arbitres (total, par catégorie, disponibles, etc.).\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get My Referee Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/referees/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "referees",
+                "me"
+              ]
+            },
+            "description": "Récupérer son propre profil arbitre.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Update My Referee Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"456 Rue de la Liberté, Sfax\",\n  \"emergencyContact\": {\n    \"name\": \"Ahmed Ben Ali\",\n    \"phone\": \"+216 55 123 456\"\n  },\n  \"notes\": \"Disponible weekends uniquement\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/referees/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "referees",
+                "me"
+              ]
+            },
+            "description": "Modifier les champs autorisés de son profil (adresse, contact d'urgence, notes).\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get Referee by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/referees/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "referees",
+                ":id"
+              ]
+            },
+            "description": "Récupérer un arbitre par ID.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Update Referee",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"A\",\n  \"league\": \"Ligue Professionnelle\",\n  \"allowedRoles\": [\"ARBITRE_CENTRAL\", \"ASSISTANT_1\", \"ASSISTANT_2\", \"QUATRIEME_ARBITRE\", \"ARBITRE_VAR\", \"ASSISTANT_VAR\"],\n  \"isVARCertified\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/referees/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "referees",
+                ":id"
+              ]
+            },
+            "description": "Modifier un arbitre (catégorie, certification VAR, etc.).\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Delete Referee",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/referees/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "referees",
+                ":id"
+              ]
+            },
+            "description": "Supprimer un arbitre.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Import Referees (Bulk)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"referees\": [\n    {\n      \"email\": \"referee2@dna.tn\",\n      \"password\": \"Referee123!\",\n      \"firstName\": \"Pierre\",\n      \"lastName\": \"Martin\",\n      \"phoneNumber\": \"+216 98 765 432\",\n      \"matricule\": \"REF2026002\",\n      \"category\": \"C1\",\n      \"region\": \"Sfax\",\n      \"dateOfBirth\": \"1988-03-20\",\n      \"cin\": \"87654321\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/referees/import",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "referees",
+                "import"
+              ]
+            },
+            "description": "Importer plusieurs arbitres en masse.\n\n**Accès:** ADMIN_DNA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏟️ Teams",
+      "description": "Gestion des équipes de football.\n\nLa région des équipes est utilisée pour la validation des conflits d'intérêts (un arbitre de la même région ne peut pas officier le match d'une équipe locale).\n\n**Accès:** ADMIN_DNA",
+      "item": [
+        {
+          "name": "Create Team",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Étoile Sportive du Sahel\",\n  \"shortName\": \"ESS\",\n  \"city\": \"Sousse\",\n  \"region\": \"Sousse\",\n  \"league\": \"LIGUE1\",\n  \"stadium\": \"Stade Olympique de Sousse\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/teams",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams"
+              ]
+            },
+            "description": "Créer une nouvelle équipe.\n\n**Ligues:** LIGUE1, LIGUE2, LIGUE3\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get All Teams",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/teams",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by team name or shortName (case-insensitive)",
+                  "disabled": true
+                },
+                {
+                  "key": "region",
+                  "value": "Tunis",
+                  "description": "Filter by region",
+                  "disabled": true
+                },
+                {
+                  "key": "league",
+                  "value": "LIGUE1",
+                  "description": "Filter by league (competition)",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active status",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Results per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Récupérer toutes les équipes avec pagination et filtres optionnels.\n\n**Filtres:** search (nom/shortName), region, league, isActive, page, limit\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Get Teams by Region",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/teams/region/Sousse",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "region",
+                "Sousse"
+              ]
+            },
+            "description": "Récupérer les équipes par région.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Get Teams by League",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/teams/league/LIGUE1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "league",
+                "LIGUE1"
+              ]
+            },
+            "description": "Récupérer les équipes par ligue.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Get Available Regions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/teams/regions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "regions"
+              ]
+            },
+            "description": "Liste des régions avec équipes.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Get Team by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/teams/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                ":id"
+              ]
+            },
+            "description": "Récupérer une équipe par ID.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Update Team",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stadium\": \"Nouveau Stade Olympique de Sousse\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/teams/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                ":id"
+              ]
+            },
+            "description": "Modifier une équipe.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Delete Team",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/teams/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                ":id"
+              ]
+            },
+            "description": "Supprimer une équipe.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Seed Tunisian Teams",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/teams/seed",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                "seed"
+              ]
+            },
+            "description": "Initialiser la base avec les équipes tunisiennes (Ligue 1 & 2).\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Upload Team Logo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "logo",
+                  "type": "file",
+                  "src": "/path/to/logo.png",
+                  "description": "Image du logo de l'équipe (jpg, jpeg, png, gif, svg, webp - max 2MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/teams/:id/logo",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                ":id",
+                "logo"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{team_id}}",
+                  "description": "ID de l'équipe"
+                }
+              ]
+            },
+            "description": "Upload du logo d'une équipe. Formats acceptés: jpg, jpeg, png, gif, svg, webp. Taille max: 2MB.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Delete Team Logo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/teams/:id/logo",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "teams",
+                ":id",
+                "logo"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{team_id}}",
+                  "description": "ID de l'équipe"
+                }
+              ]
+            },
+            "description": "Supprimer le logo d'une équipe.\n\n**Accès:** ADMIN_DNA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Matches",
+      "description": "Gestion des matchs de football.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA",
+      "item": [
+        {
+          "name": "Create Match",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matchNumber\": \"M2026-001\",\n  \"journee\": 15,\n  \"saison\": \"2025-2026\",\n  \"date\": \"2026-02-15\",\n  \"time\": \"20:00\",\n  \"homeTeamId\": \"team-id-est\",\n  \"awayTeamId\": \"team-id-ca\",\n  \"category\": \"A\",\n  \"competition\": \"LIGUE1\",\n  \"hasVAR\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/matches",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches"
+              ]
+            },
+            "description": "Créer un match. Les noms d'équipes et le stade sont auto-remplis depuis les données des équipes.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get All Matches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/matches?competition=LIGUE1&status=SCHEDULED&saison=2025-2026&journee=15&page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches"
+              ],
+              "query": [
+                {
+                  "key": "competition",
+                  "value": "LIGUE1",
+                  "description": "Filtrer par compétition (LIGUE1, LIGUE2, COUPE, AMATEUR_C1, AMATEUR_C2, JEUNES, FEMININE, REGIONAL)",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "SCHEDULED",
+                  "description": "Filtrer par statut (SCHEDULED, COMPLETED, POSTPONED, CANCELLED)",
+                  "disabled": true
+                },
+                {
+                  "key": "saison",
+                  "value": "2025-2026",
+                  "description": "Filtrer par saison (ex: 2025-2026)",
+                  "disabled": true
+                },
+                {
+                  "key": "journee",
+                  "value": "15",
+                  "description": "Filtrer par numéro de journée",
+                  "disabled": true
+                },
+                {
+                  "key": "date",
+                  "value": "2026-02-15",
+                  "description": "Filtrer par date spécifique (ISO format: YYYY-MM-DD)",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Numéro de page (défaut: 1)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Éléments par page (défaut: 10)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Récupérer tous les matchs avec filtres optionnels.\n\n**Filtres disponibles:**\n- **competition**: Filtrer par compétition/ligue (LIGUE1, LIGUE2, COUPE, AMATEUR_C1, AMATEUR_C2, JEUNES, FEMININE, REGIONAL)\n- **status**: Filtrer par statut (SCHEDULED, COMPLETED, POSTPONED, CANCELLED)\n- **saison**: Filtrer par saison (ex: 2025-2026)\n- **journee**: Filtrer par numéro de journée\n- **date**: Filtrer par date spécifique (format ISO: YYYY-MM-DD)\n- **page**: Numéro de page pour la pagination (défaut: 1)\n- **limit**: Nombre d'éléments par page (défaut: 10)\n\n**Exemples:**\n- Matchs de Ligue 1: `?competition=LIGUE1`\n- Matchs programmés: `?status=SCHEDULED`\n- Matchs de la journée 15: `?journee=15&saison=2025-2026`\n- Combiner plusieurs filtres: `?competition=LIGUE2&status=COMPLETED&saison=2025-2026&page=1&limit=20`\n\n**Retourne:** { data: Match[], total, page, limit, totalPages }\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Get Matches - Filter by Competition",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/matches?competition=LIGUE1&saison=2025-2026",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches"
+              ],
+              "query": [
+                {
+                  "key": "competition",
+                  "value": "LIGUE1",
+                  "description": "Filtrer par compétition"
+                },
+                {
+                  "key": "saison",
+                  "value": "2025-2026",
+                  "description": "Filtrer par saison"
+                }
+              ]
+            },
+            "description": "Exemple: Récupérer tous les matchs de Ligue 1 pour la saison 2025-2026.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Get Matches - Filter by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/matches?status=SCHEDULED&page=1&limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "SCHEDULED",
+                  "description": "Filtrer par statut"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Limite"
+                }
+              ]
+            },
+            "description": "Exemple: Récupérer tous les matchs programmés avec pagination.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Get Matches - Multiple Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/matches?competition=LIGUE2&status=COMPLETED&saison=2025-2026&journee=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches"
+              ],
+              "query": [
+                {
+                  "key": "competition",
+                  "value": "LIGUE2",
+                  "description": "Ligue 2"
+                },
+                {
+                  "key": "status",
+                  "value": "COMPLETED",
+                  "description": "Matchs terminés"
+                },
+                {
+                  "key": "saison",
+                  "value": "2025-2026",
+                  "description": "Saison"
+                },
+                {
+                  "key": "journee",
+                  "value": "15",
+                  "description": "Journée 15"
+                }
+              ]
+            },
+            "description": "Exemple: Combiner plusieurs filtres - Matchs terminés de Ligue 2, journée 15, saison 2025-2026.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Get Match Calendar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/matches/calendar?startDate=2026-01-01&endDate=2026-12-31",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches",
+                "calendar"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-12-31"
+                }
+              ]
+            },
+            "description": "Calendrier des matchs pour une période donnée.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Get Match by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/matches/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches",
+                ":id"
+              ]
+            },
+            "description": "Récupérer un match par ID.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Update Match",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stadium\": \"Stade Olympique de Radès\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/matches/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches",
+                ":id"
+              ]
+            },
+            "description": "Modifier un match.\n\n**Nouveaux champs disponibles:**\n\n**Mise à jour des équipes:**\n```json\n{\n  \"homeTeamId\": \"team_id\",\n  \"awayTeamId\": \"team_id\"\n}\n```\nLes noms d'équipes (homeTeam, awayTeam) sont auto-remplis depuis la base de données.\n\n**Mise à jour du statut:**\n```json\n{\n  \"status\": \"COMPLETED\"\n}\n```\nStatuts: SCHEDULED, IN_PROGRESS, COMPLETED, POSTPONED, CANCELLED\n\n**Ajout du score final:**\n```json\n{\n  \"status\": \"COMPLETED\",\n  \"score\": {\n    \"homeScore\": 2,\n    \"awayScore\": 1\n  }\n}\n```\n\n**Activation VAR:**\n```json\n{\n  \"hasVAR\": true\n}\n```\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Update Match Date",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-02-20\",\n  \"time\": \"18:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/matches/:id/date",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches",
+                ":id",
+                "date"
+              ]
+            },
+            "description": "Modifier la date/heure d'un match.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Delete Match",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/matches/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches",
+                ":id"
+              ]
+            },
+            "description": "Supprimer un match.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Import Matches (Bulk)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matches\": [\n    {\n      \"matchNumber\": \"M2026-002\",\n      \"journee\": 10,\n      \"saison\": \"2025-2026\",\n      \"date\": \"2026-03-01\",\n      \"time\": \"15:00\",\n      \"homeTeam\": \"Étoile Sportive du Sahel\",\n      \"awayTeam\": \"Club Sportif Sfaxien\",\n      \"stadium\": \"Stade Olympique de Sousse\",\n      \"category\": \"B\",\n      \"competition\": \"D1\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/matches/import",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches",
+                "import"
+              ]
+            },
+            "description": "Importer plusieurs matchs en masse.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Submit Match Sheet (CRA)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"score\": {\n    \"homeScore\": 2,\n    \"awayScore\": 1\n  },\n  \"notes\": \"RAS, Match terminé sans incident.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/matches/:id/submit-sheet",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "matches",
+                ":id",
+                "submit-sheet"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{match_id}}"
+                }
+              ]
+            },
+            "description": "CRA submits a match sheet (result) to DNA. Marks the match as COMPLETED with the provided score and records the submitter."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Designations",
+      "description": "Désignation des arbitres aux matchs.\n\n**Workflow:** DRAFT → SUBMITTED → VALIDATED\n\n**Accès:**\n- DESIGNATION_DNA: Création et soumission\n- CAA/CAJ/CAF: Par catégorie\n- CRA: Override régional\n- ADMIN_DNA: Validation finale",
+      "item": [
+        {
+          "name": "Create Designation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matchId\": \"match-id-here\",\n  \"referees\": [\n    { \"refereeId\": \"referee-id-1\", \"role\": \"ARBITRE_CENTRAL\" },\n    { \"refereeId\": \"referee-id-2\", \"role\": \"ASSISTANT_1\" },\n    { \"refereeId\": \"referee-id-3\", \"role\": \"ASSISTANT_2\" },\n    { \"refereeId\": \"referee-id-4\", \"role\": \"QUATRIEME_ARBITRE\" }\n  ],\n  \"category\": \"A\",\n  \"notes\": \"Match important - désignation prioritaire\",\n  \"hasVAR\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/designations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations"
+              ]
+            },
+            "description": "Créer une désignation pour un match.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA, CAA, CAJ, CAF"
+          }
+        },
+        {
+          "name": "Get All Designations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations?status=VALIDATED",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "VALIDATED"
+                }
+              ]
+            },
+            "description": "Récupérer toutes les désignations avec filtres optionnels.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA, CAA, CAJ, CAF"
+          }
+        },
+        {
+          "name": "Get Designation Calendar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/calendar?startDate=2026-01-01&endDate=2026-12-31",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                "calendar"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-12-31"
+                }
+              ]
+            },
+            "description": "Calendrier des désignations.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Get Designation by Match",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/match/:matchId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                "match",
+                ":matchId"
+              ]
+            },
+            "description": "Récupérer la désignation pour un match spécifique.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA, CAA, CAJ, CAF"
+          }
+        },
+        {
+          "name": "Get Referee Suggestions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/suggestions/:matchId?count=5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                "suggestions",
+                ":matchId"
+              ],
+              "query": [
+                {
+                  "key": "count",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Obtenir des suggestions d'arbitres pour un match (basé sur disponibilité, région, performance).\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA, CAA, CAJ, CAF"
+          }
+        },
+        {
+          "name": "Get Eligible Referees for Match",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/eligible/:matchId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                "eligible",
+                ":matchId"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "ARBITRE_CENTRAL",
+                  "description": "Filtrer par rôle (ARBITRE_CENTRAL, ASSISTANT_1, ASSISTANT_2, QUATRIEME_ARBITRE, ARBITRE_VAR, ASSISTANT_VAR). Optionnel.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Récupérer tous les arbitres éligibles pour un match donné, en appliquant toutes les règles de validation de désignation.\n\n**Règles vérifiées:**\n- ✅ Pas de conflit de journée (déjà désigné à cette journée)\n- ✅ Pas de double réservation ce jour\n- ✅ Disponibilité déclarée\n- ✅ Catégorie suffisante pour le match\n- ✅ Pas de conflit régional\n- ✅ Rôle autorisé (si `role` fourni)\n- ✅ Certification VAR (si rôle VAR)\n- ⚠️ Limite de workload mensuel (warning uniquement, l'arbitre reste retourné)\n\n**Paramètre optionnel:**\n- `role`: ARBITRE_CENTRAL, ASSISTANT_1, ASSISTANT_2, QUATRIEME_ARBITRE, ARBITRE_VAR, ASSISTANT_VAR\n\n**Retourne:** `[{ referee: {..., userId: { firstName, lastName, email, phoneNumber, ... }}, warnings: string[] }]`\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA, CAA, CAJ, CAF, CRA"
+          }
+        },
+        {
+          "name": "Get My Designations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/my",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                "my"
+              ]
+            },
+            "description": "Récupérer ses propres désignations (pour les arbitres).\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get My Upcoming Designations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/my/upcoming",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                "my",
+                "upcoming"
+              ]
+            },
+            "description": "Récupérer ses prochaines désignations.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get Designation by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                ":id"
+              ]
+            },
+            "description": "Récupérer une désignation par ID.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Update Designation",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"referees\": [\n    { \"refereeId\": \"referee-id-1\", \"role\": \"ARBITRE_CENTRAL\" }\n  ],\n  \"notes\": \"Changement suite à indisponibilité\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/designations/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                ":id"
+              ]
+            },
+            "description": "Modifier une désignation.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA, CAA, CAJ, CAF"
+          }
+        },
+        {
+          "name": "Submit Designation",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/:id/submit",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                ":id",
+                "submit"
+              ]
+            },
+            "description": "Soumettre une désignation pour validation.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA, CAA, CAJ, CAF"
+          }
+        },
+        {
+          "name": "Validate Designation",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/:id/validate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                ":id",
+                "validate"
+              ]
+            },
+            "description": "Valider une désignation (envoie les notifications aux arbitres).\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Override Designation (CRA)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newReferees\": [\n    { \"refereeId\": \"newRef1\", \"role\": \"ARBITRE_CENTRAL\" },\n    { \"refereeId\": \"newRef2\", \"role\": \"ASSISTANT_1\" },\n    { \"refereeId\": \"newRef3\", \"role\": \"ASSISTANT_2\" },\n    { \"refereeId\": \"newRef4\", \"role\": \"QUATRIEME_ARBITRE\" }\n  ],\n  \"reason\": \"Arbitre principal indisponible suite à blessure\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/designations/:id/override",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                ":id",
+                "override"
+              ]
+            },
+            "description": "Override d'urgence par CRA pour remplacer des arbitres.\n\n**Accès:** ADMIN_DNA, CRA"
+          }
+        },
+        {
+          "name": "Take Control (CRA)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Prise de contrôle manuelle pour match critique\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/designations/:id/take-control",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                ":id",
+                "take-control"
+              ]
+            },
+            "description": "CRA prend le contrôle total de la désignation.\n\n**Accès:** ADMIN_DNA, CRA"
+          }
+        },
+        {
+          "name": "Get Override History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/:id/override-history",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                ":id",
+                "override-history"
+              ]
+            },
+            "description": "Historique des modifications d'une désignation.\n\n**Accès:** ADMIN_DNA, CRA"
+          }
+        },
+        {
+          "name": "Revert Override",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Retour à la configuration précédente\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/designations/:id/revert-override",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                ":id",
+                "revert-override"
+              ]
+            },
+            "description": "Annuler le dernier override.\n\n**Accès:** ADMIN_DNA, CRA"
+          }
+        },
+        {
+          "name": "Send Notifications",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/:id/send-notifications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                ":id",
+                "send-notifications"
+              ]
+            },
+            "description": "Envoyer les notifications aux arbitres désignés.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Bulk Assign Designations",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"designations\": [\n    {\n      \"matchId\": \"match-id-1\",\n      \"referees\": [\n        { \"refereeId\": \"ref1\", \"role\": \"ARBITRE_CENTRAL\" },\n        { \"refereeId\": \"ref2\", \"role\": \"ASSISTANT_1\" },\n        { \"refereeId\": \"ref3\", \"role\": \"ASSISTANT_2\" },\n        { \"refereeId\": \"ref4\", \"role\": \"QUATRIEME_ARBITRE\" }\n      ],\n      \"category\": \"A\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/designations/bulk-assign",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                "bulk-assign"
+              ]
+            },
+            "description": "Créer plusieurs désignations en masse.\n\n**Accès:** ADMIN_DNA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Delete Designation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/designations/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "designations",
+                ":id"
+              ]
+            },
+            "description": "Supprimer une désignation.\n\n**Accès:** ADMIN_DNA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📆 Availability",
+      "description": "Gestion des disponibilités et indisponibilités des arbitres.\n\n**Types:** INJURED (blessé), EXCUSE, SICK (malade), PERSONAL, UNAVAILABLE\n\n**Accès:**\n- ARBITRE: Signaler sa propre indisponibilité\n- CRA: Gérer les demandes de sa région\n- ADMIN_DNA: Accès complet",
+      "item": [
+        {
+          "name": "Report My Unavailability",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dateFrom\": \"2026-02-15\",\n  \"dateTo\": \"2026-02-20\",\n  \"type\": \"INJURED\",\n  \"reason\": \"Blessure au genou - certificat médical joint\",\n  \"urgency\": \"URGENT\",\n  \"notifyCRA\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/availability/report",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability",
+                "report"
+              ]
+            },
+            "description": "Signaler une indisponibilité et notifier optionnellement le CRA.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get My Unavailability Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/availability/my",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability",
+                "my"
+              ]
+            },
+            "description": "Récupérer ses propres enregistrements d'indisponibilité.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Create Availability (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refereeId\": \"referee-id-here\",\n  \"dateFrom\": \"2026-02-01\",\n  \"dateTo\": \"2026-02-07\",\n  \"type\": \"UNAVAILABLE\",\n  \"reason\": \"Congé personnel\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/availability",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability"
+              ]
+            },
+            "description": "Créer une indisponibilité pour un arbitre.\n\n**Accès:** ADMIN_DNA, CRA"
+          }
+        },
+        {
+          "name": "Get All Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/availability",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability"
+              ]
+            },
+            "description": "Récupérer toutes les disponibilités.\n\n**Accès:** ADMIN_DNA, CRA"
+          }
+        },
+        {
+          "name": "Get Active Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/availability/active",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability",
+                "active"
+              ]
+            },
+            "description": "Récupérer les indisponibilités actuellement actives.\n\n**Accès:** ADMIN_DNA, CRA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Get Availability by Referee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/availability/referee/:refereeId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability",
+                "referee",
+                ":refereeId"
+              ]
+            },
+            "description": "Récupérer les indisponibilités d'un arbitre.\n\n**Accès:** ADMIN_DNA, CRA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Get Availability by Date",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/availability/date/:date",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability",
+                "date",
+                ":date"
+              ]
+            },
+            "description": "Récupérer les indisponibilités pour une date.\n\n**Accès:** ADMIN_DNA, CRA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Get CRA Pending Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/availability/cra/pending?region=Tunis",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability",
+                "cra",
+                "pending"
+              ],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "Tunis"
+                }
+              ]
+            },
+            "description": "Récupérer les demandes d'indisponibilité en attente de réponse CRA pour une région.\n\n**Accès:** CRA, ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Approve Availability",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": \"Pris en compte, bon rétablissement.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/availability/:id/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability",
+                ":id",
+                "approve"
+              ]
+            },
+            "description": "Approuver une demande d'indisponibilité avec message optionnel.\n\n**Paramètre optionnel:** `response` - Message de réponse (ex: accusé de réception CRA)\n\n**Accès:** ADMIN_DNA, CRA, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Reject Availability",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Refusé - délai insuffisant\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/availability/:id/reject",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability",
+                ":id",
+                "reject"
+              ]
+            },
+            "description": "Rejeter une demande d'indisponibilité.\n\n**Accès:** ADMIN_DNA, CRA"
+          }
+        },
+        {
+          "name": "Delete Availability",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/availability/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability",
+                ":id"
+              ]
+            },
+            "description": "Supprimer une indisponibilité.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Forward to DNA (CRA)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/availability/:id/forward-to-dna",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "availability",
+                ":id",
+                "forward-to-dna"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{availability_id}}"
+                }
+              ]
+            },
+            "description": "CRA forwards an approved unavailability (injury/excuse) record to all active Admin DNA users via in-app notification."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💰 Payments",
+      "description": "Gestion des paiements des arbitres.\n\n**Workflow:** PENDING → VALIDATED → PAID\n\n**Accès:** ADMIN_DNA",
+      "item": [
+        {
+          "name": "Generate Payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refereeId\": \"referee-id\",\n  \"month\": \"2026-01\",\n  \"saison\": \"2025-2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/generate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "generate"
+              ]
+            },
+            "description": "Générer un paiement pour un arbitre.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments?status=PENDING",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            },
+            "description": "Récupérer tous les paiements avec filtres.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get Pending Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/pending",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "pending"
+              ]
+            },
+            "description": "Récupérer les paiements en attente.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get Payment Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/statistics?saison=2025-2026",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "statistics"
+              ],
+              "query": [
+                {
+                  "key": "saison",
+                  "value": "2025-2026"
+                }
+              ]
+            },
+            "description": "Statistiques des paiements.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get Payments by Referee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/referee/:refereeId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "referee",
+                ":refereeId"
+              ]
+            },
+            "description": "Récupérer les paiements d'un arbitre.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                ":id"
+              ]
+            },
+            "description": "Récupérer un paiement par ID.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Validate Payment",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Validated by admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/:id/validate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                ":id",
+                "validate"
+              ]
+            },
+            "description": "Valider un paiement.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Reject Payment",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Invalid amount\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/:id/reject",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                ":id",
+                "reject"
+              ]
+            },
+            "description": "Rejeter un paiement.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Mark Payment as Paid",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"VIREMENT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/:id/mark-paid",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                ":id",
+                "mark-paid"
+              ]
+            },
+            "description": "Marquer un paiement comme payé.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Bulk Validate Payments",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIds\": [\"payment-id-1\", \"payment-id-2\"],\n  \"notes\": \"Bulk validation approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/bulk-validate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "bulk-validate"
+              ]
+            },
+            "description": "Valider plusieurs paiements en masse.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get Cross-Category Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/all-categories?startDate=2026-01-01&endDate=2026-12-31",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "all-categories"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-12-31"
+                }
+              ]
+            },
+            "description": "Paiements toutes catégories confondues.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Generate Regional PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/pdf/regional?region=Tunis&startDate=2026-01-01&endDate=2026-01-31",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "pdf",
+                "regional"
+              ],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "Tunis"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-01-31"
+                }
+              ]
+            },
+            "description": "Générer un rapport PDF des paiements par région.\n\n**Accès:** ADMIN_DNA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💵 Payment Rates",
+      "description": "Gestion des barèmes de paiement par catégorie et compétition.\n\n**Accès:** ADMIN_DNA",
+      "item": [
+        {
+          "name": "Create Payment Rate",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"A\",\n  \"competition\": \"D1\",\n  \"role\": \"ARBITRE_CENTRAL\",\n  \"amount\": 350.00,\n  \"saison\": \"2025-2026\",\n  \"effectiveFrom\": \"2025-07-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/payment-rates",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payment-rates"
+              ]
+            },
+            "description": "Créer un barème de paiement.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get All Payment Rates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payment-rates",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payment-rates"
+              ]
+            },
+            "description": "Récupérer tous les barèmes.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get Active Payment Rates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payment-rates/active?saison=2025-2026&categorie=A",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payment-rates",
+                "active"
+              ],
+              "query": [
+                {
+                  "key": "saison",
+                  "value": "2025-2026"
+                },
+                {
+                  "key": "categorie",
+                  "value": "A"
+                }
+              ]
+            },
+            "description": "Récupérer les barèmes actifs avec filtres.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Calculate Payment for Match",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payment-rates/calculate?matchId=match-id&role=ARBITRE_CENTRAL",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payment-rates",
+                "calculate"
+              ],
+              "query": [
+                {
+                  "key": "matchId",
+                  "value": "match-id"
+                },
+                {
+                  "key": "role",
+                  "value": "ARBITRE_CENTRAL"
+                }
+              ]
+            },
+            "description": "Calculer le paiement pour un match et rôle.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Update Payment Rate",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 380.00\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/payment-rates/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payment-rates",
+                ":id"
+              ]
+            },
+            "description": "Modifier un barème.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Delete Payment Rate",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payment-rates/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payment-rates",
+                ":id"
+              ]
+            },
+            "description": "Supprimer un barème.\n\n**Accès:** ADMIN_DNA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Statistics & Rankings",
+      "description": "Statistiques de performance et classements des arbitres.\n\n**Accès:**\n- ARBITRE: Ses propres statistiques\n- ADMIN_DNA: Toutes les statistiques",
+      "item": [
+        {
+          "name": "Get My Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/statistics/my",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "statistics",
+                "my"
+              ]
+            },
+            "description": "Récupérer ses propres statistiques de performance.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get My Speed Chart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/statistics/my/speed-chart",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "statistics",
+                "my",
+                "speed-chart"
+              ]
+            },
+            "description": "Données multi-dimensionnelles pour graphique radar.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get My Progression",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/statistics/my/progression",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "statistics",
+                "my",
+                "progression"
+              ]
+            },
+            "description": "Progression de performance dans le temps.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get My Ranking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/statistics/my/ranking",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "statistics",
+                "my",
+                "ranking"
+              ]
+            },
+            "description": "Position dans le classement de sa catégorie.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get Rankings by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/statistics/rankings?category=A",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "statistics",
+                "rankings"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "A"
+                }
+              ]
+            },
+            "description": "Classement des arbitres par catégorie.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get Referee Speed Chart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/statistics/referee/:id/speed-chart",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "statistics",
+                "referee",
+                ":id",
+                "speed-chart"
+              ]
+            },
+            "description": "Données graphique radar pour un arbitre.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get Comparative Analysis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/statistics/referee/:id/comparative-analysis",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "statistics",
+                "referee",
+                ":id",
+                "comparative-analysis"
+              ]
+            },
+            "description": "Analyse comparative avec les pairs de la même catégorie.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get Referee Progression",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/statistics/referee/:id/progression",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "statistics",
+                "referee",
+                ":id",
+                "progression"
+              ]
+            },
+            "description": "Progression d'un arbitre dans le temps.\n\n**Accès:** ADMIN_DNA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎓 Training Resources",
+      "description": "Ressources de formation pour les arbitres (vidéos, documents, quiz).\n\n**Types:** VIDEO, DOCUMENT, QUIZ, WEBINAR\n\n**Accès:**\n- ARBITRE: Consulter les ressources de sa catégorie\n- ADMIN_DNA: Gestion complète",
+      "item": [
+        {
+          "name": "Create Training Resource",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Introduction aux Lois du Jeu\",\n  \"description\": \"Vidéo complète sur les règles de base\",\n  \"type\": \"VIDEO\",\n  \"categories\": [\"RULES\"],\n  \"url\": \"https://example.com/video1.mp4\",\n  \"thumbnailUrl\": \"https://example.com/thumb1.jpg\",\n  \"duration\": 45,\n  \"targetCategories\": [\"C1\", \"C2\"],\n  \"isPersonal\": false,\n  \"targetRefereeIds\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/training-resources",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "training-resources"
+              ]
+            },
+            "description": "Créer une ressource de formation.\n\n**Champs personnels:**\n- `isPersonal`: true pour vidéo personnalisée\n- `targetRefereeIds`: IDs des arbitres ciblés (si isPersonal=true)\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get All Training Resources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/training-resources?page=1&limit=10&type=VIDEO&category=RULES&search=arbitrage",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "training-resources"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Numéro de page (défaut: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Nombre d'éléments par page (défaut: 10)"
+                },
+                {
+                  "key": "type",
+                  "value": "VIDEO",
+                  "description": "VIDEO, DOCUMENT, QUIZ, WEBINAR"
+                },
+                {
+                  "key": "category",
+                  "value": "RULES",
+                  "description": "RULES, POSITIONING, MECHANICS, FITNESS, VAR, etc."
+                },
+                {
+                  "key": "targetAudience",
+                  "value": "",
+                  "description": "Catégorie d'arbitres (ELITE, FIFA, A, B, C1, C2, C3, ALL)",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "arbitrage",
+                  "description": "Recherche dans titre et description"
+                }
+              ]
+            },
+            "description": "Récupérer les ressources avec pagination, filtres et recherche.\n\n**Pagination:**\n- page: Numéro de page (défaut: 1)\n- limit: Éléments par page (défaut: 10)\n\n**Filtres:**\n- type: VIDEO, DOCUMENT, QUIZ, WEBINAR\n- category: RULES, POSITIONING, MECHANICS, FITNESS, VAR, etc.\n- targetAudience: Catégorie d'arbitres ciblée\n- search: Recherche dans titre et description (regex case-insensitive)\n\n**Retourne:** { data: TrainingResource[], total, page, limit, totalPages }\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Get My Training Resources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/training-resources/my",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "training-resources",
+                "my"
+              ]
+            },
+            "description": "Ressources filtrées pour sa catégorie d'arbitre.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get My Personal Resources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/training-resources/my/personal",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "training-resources",
+                "my",
+                "personal"
+              ]
+            },
+            "description": "Vidéos personnalisées ciblant spécifiquement cet arbitre.\n\n**User Story:** Arbitre peut recevoir des vidéos personnelles\n\n**Retourne:** Ressources où `isPersonal=true` et l'arbitre est dans `targetRefereeIds`\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get Recommended Resources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/training-resources/my/recommended",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "training-resources",
+                "my",
+                "recommended"
+              ]
+            },
+            "description": "Recommandations personnalisées basées sur les performances.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get Training Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/training-resources/statistics",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "training-resources",
+                "statistics"
+              ]
+            },
+            "description": "Statistiques de consultation des ressources.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Update Training Resource",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Title\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/training-resources/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "training-resources",
+                ":id"
+              ]
+            },
+            "description": "Modifier une ressource.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Track Video View",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/training-resources/:id/view",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "training-resources",
+                ":id",
+                "view"
+              ]
+            },
+            "description": "Enregistrer une vue de vidéo.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Rate Training Resource",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/training-resources/:id/rate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "training-resources",
+                ":id",
+                "rate"
+              ]
+            },
+            "description": "Noter une ressource (1-5).\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Delete Training Resource",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/training-resources/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "training-resources",
+                ":id"
+              ]
+            },
+            "description": "Supprimer une ressource.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Notify Referees About Resource",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refereeIds\": [],\n  \"message\": \"Nouvelle ressource de formation disponible !\",\n  \"targetAudience\": \"ALL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/training-resources/:id/notify-arbitres",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "training-resources",
+                ":id",
+                "notify-arbitres"
+              ]
+            },
+            "description": "Envoyer une notification aux arbitres pour une nouvelle ressource.\n\n**User Story:** Arbitre notifié quand nouvelle ressource formation ajoutée\n\n**Body:**\n- `refereeIds`: Liste d'IDs spécifiques (optionnel)\n- `message`: Message personnalisé (optionnel)\n- `targetAudience`: ALL ou catégorie spécifique\n\n**Retourne:** { notified, failed }\n\n**Accès:** ADMIN_DNA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Convocations",
+      "description": "Gestion des convocations aux séminaires et réunions.\n\n**Types:** TECHNICAL_MEETING, SEMINAR, TRAINING, EVALUATION\n\n**Accès:**\n- ARBITRE: Voir ses convocations\n- ADMIN_DNA: Gestion complète",
+      "item": [
+        {
+          "name": "Create Convocation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Réunion technique - Journée 15\",\n  \"type\": \"TECHNICAL_MEETING\",\n  \"description\": \"Réunion préparatoire pour les matchs de la journée 15\",\n  \"date\": \"2026-02-10\",\n  \"location\": \"Siège de la FTF, Tunis\",\n  \"referees\": [\"referee-id-1\", \"referee-id-2\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/convocations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "convocations"
+              ]
+            },
+            "description": "Créer une convocation.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get All Convocations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/convocations?page=1&limit=10&type=SEMINAR&status=PLANNED",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "convocations"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Numéro de page (défaut: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Nombre d'éléments par page (défaut: 10)"
+                },
+                {
+                  "key": "type",
+                  "value": "SEMINAR",
+                  "description": "TECHNICAL_MEETING, SEMINAR, TRAINING, EVALUATION"
+                },
+                {
+                  "key": "status",
+                  "value": "PLANNED",
+                  "description": "PLANNED, IN_PROGRESS, COMPLETED, CANCELLED"
+                },
+                {
+                  "key": "startDate",
+                  "value": "",
+                  "description": "Date de début (YYYY-MM-DD)",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "",
+                  "description": "Date de fin (YYYY-MM-DD)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Récupérer toutes les convocations avec pagination et filtres.\n\n**Pagination:**\n- page: Numéro de page (défaut: 1)\n- limit: Éléments par page (défaut: 10)\n\n**Filtres:**\n- type: TECHNICAL_MEETING, SEMINAR, TRAINING, EVALUATION\n- status: PLANNED, IN_PROGRESS, COMPLETED, CANCELLED\n- startDate/endDate: Filtrer par période\n\n**Retourne:** { data: Convocation[], total, page, limit, totalPages }\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get My Convocations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/convocations/my",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "convocations",
+                "my"
+              ]
+            },
+            "description": "Récupérer ses propres convocations.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get My Upcoming Convocations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/convocations/my/upcoming",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "convocations",
+                "my",
+                "upcoming"
+              ]
+            },
+            "description": "Récupérer ses prochaines convocations.\n\n**Accès:** ARBITRE"
+          }
+        },
+        {
+          "name": "Get Convocation by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/convocations/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "convocations",
+                ":id"
+              ]
+            },
+            "description": "Récupérer une convocation par ID.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Update Convocation",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/convocations/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "convocations",
+                ":id"
+              ]
+            },
+            "description": "Modifier une convocation.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Add Note to Convocation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Important : arriver 1 heure avant le début\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/convocations/:id/add-note",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "convocations",
+                ":id",
+                "add-note"
+              ]
+            },
+            "description": "Ajouter une note à une convocation.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Send Notifications",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/convocations/:id/send-notifications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "convocations",
+                ":id",
+                "send-notifications"
+              ]
+            },
+            "description": "Envoyer les notifications aux arbitres convoqués.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Delete Convocation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/convocations/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "convocations",
+                ":id"
+              ]
+            },
+            "description": "Supprimer une convocation.\n\n**Accès:** ADMIN_DNA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notifications",
+      "description": "Système de notifications temps réel.\n\n**Canaux:**\n- IN_APP: Temps réel via WebSocket\n- WHATSAPP: Via GREEN-API\n- EMAIL: Notifications par email\n\n**Types de notifications:**\n- DESIGNATION_ASSIGNED: Nouvelle désignation\n- CONVOCATION_INVITED: Convocation séminaire/réunion\n- MATCH_REMINDER: Rappel match J-1\n- SEMINAR_REMINDER: Rappel séminaire\n- PAYMENT_VALIDATED: Bilan validé\n- EXCUSE_RECEIVED: Indisponibilité signalée (→ CRA)\n- INSPECTOR_REPORT: Rapport CDC reçu (→ Arbitre)\n- INSPECTOR_REPORT_SUBMITTED: Rapport CDC transmis (→ Admin DNA)\n- CATEGORY_CHANGE: Promotion/changement catégorie\n- TRAINING_RESOURCE_NEW: Nouvelle ressource formation\n- ANNOUNCEMENT: Annonce groupée",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/my?page=1&limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "my"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Récupérer ses notifications (paginées).\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/unread-count",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "unread-count"
+              ]
+            },
+            "description": "Nombre de notifications non lues.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/:id/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                ":id",
+                "read"
+              ]
+            },
+            "description": "Marquer une notification comme lue.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/read-all",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": "Marquer toutes les notifications comme lues.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                ":id"
+              ]
+            },
+            "description": "Supprimer une notification.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Get My Preferences",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/preferences",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "preferences"
+              ]
+            },
+            "description": "Récupérer ses préférences de notification.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Update My Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channels\": {\n    \"inApp\": true,\n    \"email\": true,\n    \"whatsapp\": true\n  },\n  \"whatsappNumber\": \"+216 XX XXX XXX\",\n  \"emailAddress\": \"arbitre@email.com\",\n  \"quietHoursEnabled\": true,\n  \"quietHoursStart\": \"22:00\",\n  \"quietHoursEnd\": \"07:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/notifications/preferences",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "preferences"
+              ]
+            },
+            "description": "Modifier ses préférences de notification.\n\n**Body:**\n- `channels`: Canaux activés (inApp, whatsapp, email)\n- `whatsappNumber`: Numéro WhatsApp alternatif\n- `emailAddress`: Email alternatif pour notifications\n- `quietHoursEnabled`: Activer les heures calmes\n- `quietHoursStart/End`: Plage horaire sans notifications\n\n**Note:** Les préférences sont créées automatiquement avec les coordonnées du profil utilisateur.\n\n**Accès:** Authentifié"
+          }
+        },
+        {
+          "name": "Send Group Notification (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Annonce Importante\",\n  \"message\": \"Veuillez noter les nouvelles règles de la saison 2025-2026.\",\n  \"regions\": [\"Tunis\", \"Sfax\"],\n  \"categories\": [\"A\", \"B\", \"ELITE\"],\n  \"channels\": [\"IN_APP\", \"WHATSAPP\"],\n  \"priority\": \"HIGH\",\n  \"sendWhatsApp\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/notifications/send-group",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "send-group"
+              ]
+            },
+            "description": "Envoyer une notification de groupe avec filtres.\n\n**Filtres:** regions, leagues, categories (tous optionnels)\n**Sans filtre:** Envoie à tous les arbitres actifs\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get WhatsApp Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/whatsapp/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "whatsapp",
+                "status"
+              ]
+            },
+            "description": "Statut du compte WhatsApp GREEN-API.\n\n**Accès:** ADMIN_DNA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👔 CDC - Inspectors",
+      "description": "Gestion des inspecteurs (commissaires) par la Commission des Commissaires (CDC).\n\n**Important:**\n- Inspecteur = Commissaire (même rôle)\n- Les inspecteurs n'ont PAS accès à l'application\n- Le CDC gère tout : création, affectations, rapports\n\n**Accès:** ADMIN_DNA, CDC",
+      "item": [
+        {
+          "name": "Create Inspector",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"inspector@dna.tn\",\n  \"password\": \"Inspector123!\",\n  \"firstName\": \"Ahmed\",\n  \"lastName\": \"Ben Ali\",\n  \"phoneNumber\": \"+216 22 333 444\",\n  \"matricule\": \"INS2026001\",\n  \"region\": \"Tunis\",\n  \"specialization\": \"Arbitrage technique\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/inspectors",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspectors"
+              ]
+            },
+            "description": "Créer un nouvel inspecteur.\n\nNote: Crée un compte utilisateur mais l'inspecteur ne se connecte pas - le CDC gère tout.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Get All Inspectors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspectors",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspectors"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by firstName, lastName, email or matricule (case-insensitive, linked User fields)",
+                  "disabled": true
+                },
+                {
+                  "key": "region",
+                  "value": "Tunis",
+                  "description": "Filter by region",
+                  "disabled": true
+                },
+                {
+                  "key": "specialization",
+                  "value": "",
+                  "description": "Filter by specialization",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active/inactive status",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Results per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Récupérer tous les inspecteurs avec pagination et filtres optionnels.\n\n**Filtres:** search (nom/email/matricule via User), region, specialization, isActive, page, limit\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Get Inspector by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspectors/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspectors",
+                ":id"
+              ]
+            },
+            "description": "Récupérer un inspecteur par ID.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Update Inspector",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"Sfax\",\n  \"specialization\": \"VAR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/inspectors/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspectors",
+                ":id"
+              ]
+            },
+            "description": "Modifier un inspecteur.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Delete Inspector",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspectors/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspectors",
+                ":id"
+              ]
+            },
+            "description": "Supprimer un inspecteur.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 CDC - Inspector Assignments",
+      "description": "Affectation des inspecteurs aux matchs pour observer les arbitres.\n\n**Workflow:** PENDING → CONFIRMED → COMPLETED (avec rapport) | CANCELLED\n\n**Accès:** ADMIN_DNA, CDC",
+      "item": [
+        {
+          "name": "Assign Inspector to Match",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matchId\": \"match-id-here\",\n  \"inspectorId\": \"inspector-id-here\",\n  \"notes\": \"Affectation prioritaire - Match important\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/inspector-assignments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-assignments"
+              ]
+            },
+            "description": "Affecter un inspecteur à un match pour observer.\n\nStatus: CONFIRMED par défaut (pas de confirmation inspecteur - pas d'accès app).\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Get All Assignments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-assignments?status=CONFIRMED",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-assignments"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "CONFIRMED"
+                }
+              ]
+            },
+            "description": "Récupérer toutes les affectations avec filtres.\n\n**Paramètres:** matchId, inspectorId, status\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-assignments/dashboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-assignments",
+                "dashboard"
+              ]
+            },
+            "description": "Dashboard CDC avec statistiques:\n- Résumé (pending/confirmed/completed/cancelled)\n- Affectations en attente de rapport\n- Affectations récentes\n- Par inspecteur\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Get Awaiting Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-assignments/awaiting-report",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-assignments",
+                "awaiting-report"
+              ]
+            },
+            "description": "Affectations confirmées où le match est passé mais pas de rapport soumis.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Get Assignments by Match",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-assignments/match/:matchId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-assignments",
+                "match",
+                ":matchId"
+              ]
+            },
+            "description": "Affectations pour un match spécifique.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Get Assignments by Inspector",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-assignments/inspector/:inspectorId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-assignments",
+                "inspector",
+                ":inspectorId"
+              ]
+            },
+            "description": "Historique des affectations d'un inspecteur.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Get Assignment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-assignments/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-assignments",
+                ":id"
+              ]
+            },
+            "description": "Détails d'une affectation.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Cancel Assignment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Inspecteur non disponible - changement de planning\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/inspector-assignments/:id/cancel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-assignments",
+                ":id",
+                "cancel"
+              ]
+            },
+            "description": "Annuler une affectation. Impossible d'annuler les affectations COMPLETED.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Link Report to Assignment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportId\": \"inspector-report-id-here\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/inspector-assignments/:id/link-report",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-assignments",
+                ":id",
+                "link-report"
+              ]
+            },
+            "description": "Lier un rapport d'inspection à l'affectation. Status passe à COMPLETED.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📄 CDC - Inspector Reports",
+      "description": "Rapports d'inspection des arbitres par les inspecteurs.\n\nLe CDC crée et gère les rapports pour le compte des inspecteurs (qui n'ont pas accès à l'app).\n\n**Workflow:** DRAFT → SUBMITTED → VALIDATED\n\n**Accès:** ADMIN_DNA, CDC",
+      "item": [
+        {
+          "name": "Create Inspector Report",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refereeId\": \"referee-id-here\",\n  \"matchId\": \"match-id-here\",\n  \"inspectorId\": \"inspector-id-here\",\n  \"inspectionDate\": \"2026-02-01\",\n  \"inspectionType\": \"DURING_MATCH\",\n  \"scores\": {\n    \"technicalScore\": 16,\n    \"physicalScore\": 15,\n    \"psychologicalScore\": 17,\n    \"communicationScore\": 16,\n    \"decisionMakingScore\": 18\n  },\n  \"strengths\": \"Excellent positionnement, Bonne autorité\",\n  \"weaknesses\": \"Améliorer la reconnaissance des fautes\",\n  \"recommendations\": \"Formation supplémentaire recommandée\",\n  \"trainingNeeds\": [\"Règles du jeu\", \"Positionnement\"],\n  \"verdict\": \"VERY_GOOD\",\n  \"promotionRecommendation\": \"RECOMMENDED\",\n  \"confidential\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/inspector-reports",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-reports"
+              ]
+            },
+            "description": "Créer un rapport d'inspection.\n\n**Scores (0-20):**\n- technicalScore: Score technique\n- physicalScore: Condition physique\n- psychologicalScore: Aspect psychologique\n- communicationScore: Communication\n- decisionMakingScore: Prise de décision\n\n**Verdicts:** EXCELLENT, VERY_GOOD, GOOD, AVERAGE, INSUFFICIENT\n**Recommandations:** STRONGLY_RECOMMENDED, RECOMMENDED, NEUTRAL, NOT_RECOMMENDED\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Get All Reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-reports?page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-reports"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "VALIDATED",
+                  "description": "Filtrer par statut (DRAFT, SUBMITTED, REVIEWED, ARCHIVED). Optionnel.",
+                  "disabled": true
+                },
+                {
+                  "key": "refereeId",
+                  "value": "",
+                  "description": "Filtrer par arbitre (ID). Optionnel.",
+                  "disabled": true
+                },
+                {
+                  "key": "inspectorId",
+                  "value": "",
+                  "description": "Filtrer par inspecteur (ID). Optionnel.",
+                  "disabled": true
+                },
+                {
+                  "key": "matchId",
+                  "value": "",
+                  "description": "Filtrer par match (ID). Optionnel.",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Numéro de page (défaut: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Éléments par page (défaut: 10)"
+                }
+              ]
+            },
+            "description": "Récupérer tous les rapports avec filtres et pagination.\n\n**Filtres disponibles:**\n- `status`: DRAFT, SUBMITTED, REVIEWED, ARCHIVED\n- `refereeId`: ID de l'arbitre\n- `inspectorId`: ID de l'inspecteur\n- `matchId`: ID du match\n- `page`: Numéro de page (défaut: 1)\n- `limit`: Éléments par page (défaut: 10)\n\n**Retourne:** `{ data: InspectorReport[], total, page, limit, totalPages }`\n\n**Accès:** ADMIN_DNA, CDC, DESIGNATION_DNA"
+          }
+        },
+        {
+          "name": "Get Reports by Referee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-reports/referee/:refereeId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-reports",
+                "referee",
+                ":refereeId"
+              ]
+            },
+            "description": "Tous les rapports pour un arbitre.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Get Latest Report for Referee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-reports/referee/:refereeId/latest",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-reports",
+                "referee",
+                ":refereeId",
+                "latest"
+              ]
+            },
+            "description": "Dernier rapport pour un arbitre.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Get Report by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-reports/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-reports",
+                ":id"
+              ]
+            },
+            "description": "Récupérer un rapport par ID.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Update Report",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verdict\": \"EXCELLENT\",\n  \"promotionRecommendation\": \"STRONGLY_RECOMMENDED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/inspector-reports/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-reports",
+                ":id"
+              ]
+            },
+            "description": "Modifier un rapport (avant soumission).\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Submit Report",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-reports/:id/submit",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-reports",
+                ":id",
+                "submit"
+              ]
+            },
+            "description": "Soumettre le rapport pour validation.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        },
+        {
+          "name": "Review Report",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewNotes\": \"Excellent evaluation, bien détaillé\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/inspector-reports/:id/review",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-reports",
+                ":id",
+                "review"
+              ]
+            },
+            "description": "Valider/réviser un rapport soumis.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Delete Report",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspector-reports/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "inspector-reports",
+                ":id"
+              ]
+            },
+            "description": "Supprimer un rapport.\n\n**Accès:** ADMIN_DNA, CDC"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👨‍💼 CRA Presidents",
+      "description": "Gestion des présidents CRA (Commission Régionale d'Arbitrage).\n\n**Accès:** ADMIN_DNA",
+      "item": [
+        {
+          "name": "Create CRA President",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cra.president@dna.tn\",\n  \"password\": \"CraPresident123!\",\n  \"firstName\": \"Mohamed\",\n  \"lastName\": \"Trabelsi\",\n  \"phoneNumber\": \"+216 55 666 777\",\n  \"region\": \"Tunis\",\n  \"startDate\": \"2026-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/cra-presidents",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cra-presidents"
+              ]
+            },
+            "description": "Créer un président CRA.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get All CRA Presidents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cra-presidents",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cra-presidents"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by firstName, lastName or email (case-insensitive, linked User fields)",
+                  "disabled": true
+                },
+                {
+                  "key": "region",
+                  "value": "Sfax",
+                  "description": "Filter by region",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active/inactive status",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Results per page",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Récupérer tous les présidents CRA avec pagination et filtres optionnels.\n\n**Filtres:** search (nom/email via User), region, isActive, page, limit\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get CRA Presidents by Region",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cra-presidents/region/:region",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cra-presidents",
+                "region",
+                ":region"
+              ]
+            },
+            "description": "Présidents CRA par région.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Get CRA President by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cra-presidents/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cra-presidents",
+                ":id"
+              ]
+            },
+            "description": "Récupérer un président CRA par ID.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Update CRA President",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nouvel.email@dna.tn\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/cra-presidents/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cra-presidents",
+                ":id"
+              ]
+            },
+            "description": "Modifier un président CRA.\n\n**Accès:** ADMIN_DNA"
+          }
+        },
+        {
+          "name": "Delete CRA President",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cra-presidents/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cra-presidents",
+                ":id"
+              ]
+            },
+            "description": "Supprimer un président CRA.\n\n**Accès:** ADMIN_DNA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📈 Dashboard",
+      "description": "Statistiques globales et page d'accueil avec graphiques.\n\n**User Story:** Page d'accueil avec stats globales (graphes, filtres journée/mois/saison)\n\n**Fonctionnalités:**\n- Statistiques agrégées (matchs, arbitres, désignations, paiements)\n- Graphiques par journée ou mois\n- Tendances de performance des arbitres\n\n**Accès:**\n- ADMIN_DNA: Accès complet\n- CRA_PRESIDENT: Stats par région\n- ARBITRE: Stats personnelles",
+      "item": [
+        {
+          "name": "Get Global Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/dashboard?saison=2025-2026",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dashboard"
+              ],
+              "query": [
+                {
+                  "key": "saison",
+                  "value": "2025-2026",
+                  "description": "Filtrer par saison"
+                },
+                {
+                  "key": "journee",
+                  "value": "1",
+                  "description": "Filtrer par journée",
+                  "disabled": true
+                },
+                {
+                  "key": "month",
+                  "value": "1",
+                  "description": "Filtrer par mois (1-12)",
+                  "disabled": true
+                },
+                {
+                  "key": "year",
+                  "value": "2025",
+                  "description": "Filtrer par année",
+                  "disabled": true
+                },
+                {
+                  "key": "region",
+                  "value": "Tunis",
+                  "description": "Filtrer par région",
+                  "disabled": true
+                },
+                {
+                  "key": "league",
+                  "value": "Ligue1",
+                  "description": "Filtrer par ligue",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Statistiques globales du tableau de bord.\n\n**Retourne:**\n- Overview: matchs (total, saison, mois, aujourd'hui, à venir)\n- Arbitres: actifs par catégorie\n- Désignations: en attente, validées, taux de complétion\n- Convocations: à venir, ce mois\n- Rapports CDC: en attente, soumis, révisés\n- Paiements: en attente, validés ce mois\n- Activité récente: 5 derniers matchs/désignations/rapports\n\n**Accès:** ADMIN_DNA, CRA_PRESIDENT, ARBITRE"
+          }
+        },
+        {
+          "name": "Get Matches Chart Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/dashboard/charts/matches?groupBy=journee&saison=2025-2026",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dashboard",
+                "charts",
+                "matches"
+              ],
+              "query": [
+                {
+                  "key": "groupBy",
+                  "value": "journee",
+                  "description": "Grouper par: journee ou month"
+                },
+                {
+                  "key": "saison",
+                  "value": "2025-2026",
+                  "description": "Filtrer par saison"
+                },
+                {
+                  "key": "league",
+                  "value": "Ligue1",
+                  "description": "Filtrer par ligue",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Données pour graphique des matchs par journée ou mois.\n\n**Retourne:**\n- _id: Numéro de journée ou mois\n- total: Nombre total de matchs\n- completed: Matchs terminés\n- upcoming: Matchs à venir\n\n**Accès:** ADMIN_DNA, CRA_PRESIDENT"
+          }
+        },
+        {
+          "name": "Get Referee Performance Trends",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/dashboard/charts/referee-performance?saison=2025-2026",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dashboard",
+                "charts",
+                "referee-performance"
+              ],
+              "query": [
+                {
+                  "key": "saison",
+                  "value": "2025-2026",
+                  "description": "Filtrer par saison"
+                }
+              ]
+            },
+            "description": "Tendances de performance des arbitres basées sur les rapports CDC.\n\n**Retourne:**\n- _id: { year, month }\n- averageScore: Score moyen\n- totalReports: Nombre de rapports\n\n**Accès:** ADMIN_DNA, INSPECTOR"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Payments — Workflows par Rôle",
+      "description": "Gestion complète des paiements des arbitres.\n\n## Statuts\nPENDING → VALIDATED → PAID\n\n## Rôles & Accès\n| Rôle | Peut faire |\n|------|-----------|\n| ADMIN_DNA | Tout |\n| FINANCE_DNA | Tout (sauf suppression) |\n| CAA | Valider catégories C1, C2 |\n| CAJ | Valider catégorie JEUNE |\n| CAF | Valider catégorie FEMININE |\n| CRA | Valider catégorie REGIONAL + PDF régionaux |\n| ARBITRE | Voir ses propres paiements uniquement |",
+      "item": [
+        {
+          "name": "📐 Barèmes (Payment Rates)",
+          "description": "Étape préalable — ADMIN_DNA configure les tarifs par catégorie/rôle/compétition avant tout calcul.",
+          "item": [
+            {
+              "name": "Create Payment Rate",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"category\": \"A\",\n  \"competition\": \"LIGUE1\",\n  \"role\": \"ARBITRE_CENTRAL\",\n  \"amount\": 350.00,\n  \"saison\": \"2025-2026\",\n  \"effectiveFrom\": \"2025-07-01\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/payment-rates",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payment-rates"
+                  ]
+                },
+                "description": "Créer un barème de paiement.\n\n**Rôles:** ARBITRE_CENTRAL, ARBITRE_ASSISTANT_1, ARBITRE_ASSISTANT_2, ARBITRE_QUATRIEME, VAR\n**Compétitions:** LIGUE1, LIGUE2, COUPE, etc.\n\n**Accès:** ADMIN_DNA"
+              }
+            },
+            {
+              "name": "Get All Payment Rates",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payment-rates",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payment-rates"
+                  ]
+                },
+                "description": "Tous les barèmes configurés.\n\n**Accès:** ADMIN_DNA"
+              }
+            },
+            {
+              "name": "Get Active Payment Rates",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payment-rates/active?saison=2025-2026&category=A",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payment-rates",
+                    "active"
+                  ],
+                  "query": [
+                    {
+                      "key": "saison",
+                      "value": "2025-2026",
+                      "description": "Saison (ex: 2025-2026)"
+                    },
+                    {
+                      "key": "category",
+                      "value": "A",
+                      "description": "Catégorie arbitre",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "Barèmes actifs filtrés par saison/catégorie.\n\n**Accès:** ADMIN_DNA"
+              }
+            },
+            {
+              "name": "Update Payment Rate",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 380.00\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/payment-rates/{{rate_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payment-rates",
+                    "{{rate_id}}"
+                  ]
+                },
+                "description": "Modifier un barème existant.\n\n**Accès:** ADMIN_DNA"
+              }
+            },
+            {
+              "name": "Delete Payment Rate",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payment-rates/{{rate_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payment-rates",
+                    "{{rate_id}}"
+                  ]
+                },
+                "description": "Supprimer un barème.\n\n**Accès:** ADMIN_DNA"
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔖 Match Payments (Détail par match)",
+          "description": "Consultation des enregistrements MatchPayment générés automatiquement lors du calcul.",
+          "item": [
+            {
+              "name": "Get Match Payments by Match",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/match-payments/match/{{match_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "match-payments",
+                    "match",
+                    "{{match_id}}"
+                  ]
+                },
+                "description": "Tous les enregistrements de paiement pour un match donné (tous les arbitres).\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CAA, CAJ, CAF, CRA"
+              }
+            },
+            {
+              "name": "Get Match Payments by Referee",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/match-payments/referee/{{referee_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "match-payments",
+                    "referee",
+                    "{{referee_id}}"
+                  ]
+                },
+                "description": "Tous les enregistrements de paiement pour un arbitre donné (tous les matchs).\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CAA, CAJ, CAF, CRA, ARBITRE"
+              }
+            }
+          ]
+        },
+        {
+          "name": "🧾 Workflow Admin — Créer une Facture",
+          "description": "Workflow complet pour créer une facture (invoice) pour un arbitre.\n\n**Étapes:**\n1. Choisir l'arbitre → GET /referees\n2. Choisir la période (startDate / endDate)\n3. **Preview Matches** — voir les matchs de la période\n4. L'admin sélectionne/désélectionne des matchs\n5. **Preview Total** — calculer le montant pour la sélection\n6. **Generate Invoice** — créer la facture officielle\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CAA, CAJ, CAF, CRA",
+          "item": [
+            {
+              "name": "ÉTAPE 1 — Choisir l'Arbitre (GET Referees)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/referees?search=&page=1&limit=20",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "referees"
+                  ],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "",
+                      "description": "Chercher par nom, prénom, matricule"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "category",
+                      "value": "A",
+                      "disabled": true
+                    },
+                    {
+                      "key": "isActive",
+                      "value": "true",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "Liste des arbitres avec recherche et pagination.\nSauvegarder le refereeId dans la variable {{referee_id}}.\n\n**Accès:** ADMIN_DNA"
+              }
+            },
+            {
+              "name": "ÉTAPE 3 — Preview Matches (période choisie)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payments/preview-matches?refereeId={{referee_id}}&startDate=2026-01-01&endDate=2026-02-01",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "preview-matches"
+                  ],
+                  "query": [
+                    {
+                      "key": "refereeId",
+                      "value": "{{referee_id}}",
+                      "description": "ID de l'arbitre"
+                    },
+                    {
+                      "key": "startDate",
+                      "value": "2026-01-01",
+                      "description": "Date début (YYYY-MM-DD)"
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "2026-02-01",
+                      "description": "Date fin exclusive (YYYY-MM-DD)"
+                    }
+                  ]
+                },
+                "description": "Retourne tous les matchs COMPLETED où cet arbitre a officié dans la période.\nChaque match indique: date, équipes, rôle, montant calculé si disponible.\n\n**Réponse:** [ { matchId, matchNumber, date, homeTeam, awayTeam, role, paymentCalculated, baseAmount, totalAmount } ]\n\n**Note:** Si paymentCalculated=false, aucun barème n'a encore été calculé pour ce match.\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CAA, CAJ, CAF, CRA"
+              }
+            },
+            {
+              "name": "ÉTAPE 5 — Preview Total (sélection admin)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refereeId\": \"{{referee_id}}\",\n  \"matchIds\": [\n    \"match-id-1\",\n    \"match-id-2\",\n    \"match-id-3\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/payments/preview-total",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "preview-total"
+                  ]
+                },
+                "description": "Calcule le total pour les matchs sélectionnés par l'admin sans créer aucun document.\nL'admin peut enlever des matchs qu'il juge non valides.\n\n**Réponse:**\n```json\n{\n  \"refereeId\": \"...\",\n  \"selectedMatches\": 3,\n  \"baseAmount\": 1050,\n  \"bonuses\": 0,\n  \"deductions\": 0,\n  \"totalAmount\": 1050,\n  \"breakdown\": [...],\n  \"warnings\": []\n}\n```\n\n**Warnings:** Si un match n'a pas encore de MatchPayment calculé, un avertissement est retourné.\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CAA, CAJ, CAF, CRA"
+              }
+            },
+            {
+              "name": "ÉTAPE 6 — Générer la Facture (Invoice)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refereeId\": \"{{referee_id}}\",\n  \"startDate\": \"2026-01-01\",\n  \"endDate\": \"2026-02-01\",\n  \"label\": \"Janvier 2026\",\n  \"matchIds\": [\n    \"match-id-1\",\n    \"match-id-2\",\n    \"match-id-3\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/payments/generate",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "generate"
+                  ]
+                },
+                "description": "Crée la facture officielle (Payment document) avec statut PENDING.\n\n**matchIds:** Optionnel — Si fourni, seuls ces matchs sont inclus.\nSi omis, tous les matchs COMPLETED de la période sont utilisés.\n\n**Unicité:** Un seul paiement par (refereeId + startDate + endDate).\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CAA, CAJ, CAF, CRA"
+              }
+            }
+          ]
+        },
+        {
+          "name": "✅ Workflow Validation (CAA/CAJ/CAF/CRA)",
+          "description": "Workflow de validation des factures créées par l'admin.\n\n**Règle par catégorie:**\n| Rôle | Catégories autorisées |\n|------|----------------------|\n| ADMIN_DNA / FINANCE_DNA | Toutes |\n| CAA | C1, C2 |\n| CAJ | JEUNE |\n| CAF | FEMININE |\n| CRA | REGIONAL |",
+          "item": [
+            {
+              "name": "Get Pending Payments",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payments/pending",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "pending"
+                  ]
+                },
+                "description": "Tous les paiements en attente de validation, triés par date de création.\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CAA, CAJ, CAF, CRA"
+              }
+            },
+            {
+              "name": "Get All Payments (filtré)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payments?status=PENDING&category=A&region=Tunis&page=1&limit=20",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "PENDING",
+                      "description": "PENDING | VALIDATED | PAID | REJECTED"
+                    },
+                    {
+                      "key": "category",
+                      "value": "A",
+                      "description": "Filtrer par catégorie",
+                      "disabled": true
+                    },
+                    {
+                      "key": "region",
+                      "value": "Tunis",
+                      "description": "Filtrer par région",
+                      "disabled": true
+                    },
+                    {
+                      "key": "refereeId",
+                      "value": "",
+                      "description": "Filtrer par arbitre",
+                      "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                },
+                "description": "Liste des paiements avec filtres.\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CAA, CAJ, CAF, CRA"
+              }
+            },
+            {
+              "name": "Get Payment by ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payments/{{payment_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "{{payment_id}}"
+                  ]
+                },
+                "description": "Détail complet d'une facture (inclut matchIds peuplés).\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CAA, CAJ, CAF, CRA, ARBITRE"
+              }
+            },
+            {
+              "name": "Validate Payment",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"notes\": \"Validé après vérification des matchs\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/payments/{{payment_id}}/validate",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "{{payment_id}}",
+                    "validate"
+                  ]
+                },
+                "description": "Valider un paiement PENDING → VALIDATED.\nEnvoie automatiquement une notification WhatsApp à l'arbitre.\n\n**Accès:** Selon règle catégorie ci-dessus"
+              }
+            },
+            {
+              "name": "Reject Payment",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": \"Erreur dans le nombre de matchs déclarés\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/payments/{{payment_id}}/reject",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "{{payment_id}}",
+                    "reject"
+                  ]
+                },
+                "description": "Rejeter un paiement PENDING → REJECTED.\nLa raison est obligatoire.\n\n**Accès:** Selon règle catégorie ci-dessus"
+              }
+            },
+            {
+              "name": "Bulk Validate Payments",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentIds\": [\n    \"{{payment_id_1}}\",\n    \"{{payment_id_2}}\"\n  ],\n  \"notes\": \"Validation groupée Janvier 2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/payments/bulk-validate",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "bulk-validate"
+                  ]
+                },
+                "description": "Valider plusieurs paiements en une seule requête.\nLes erreurs individuelles sont collectées dans 'failed'.\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CAA, CAJ, CAF, CRA"
+              }
+            }
+          ]
+        },
+        {
+          "name": "💸 Workflow Paiement (FINANCE_DNA)",
+          "description": "Workflow final pour marquer les factures comme physiquement payées.\n\n**Accès:** ADMIN_DNA, FINANCE_DNA uniquement",
+          "item": [
+            {
+              "name": "Mark Payment as Paid",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentMethod\": \"VIREMENT\",\n  \"referenceNumber\": \"VIR-2026-001\",\n  \"notes\": \"Virement du 20/01/2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/payments/{{payment_id}}/mark-paid",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "{{payment_id}}",
+                    "mark-paid"
+                  ]
+                },
+                "description": "Marquer un paiement VALIDATED → PAID.\n\n**paymentMethod:** VIREMENT | CHEQUE | ESPECES\n\n**Accès:** ADMIN_DNA, FINANCE_DNA"
+              }
+            }
+          ]
+        },
+        {
+          "name": "👁️ Workflow Arbitre (ARBITRE)",
+          "description": "Ce que l'arbitre peut voir → uniquement ses propres paiements.",
+          "item": [
+            {
+              "name": "Get My Payments",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payments/referee/{{referee_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "referee",
+                    "{{referee_id}}"
+                  ]
+                },
+                "description": "Historique complet des paiements d'un arbitre, trié par date.\n\n**Accès:** ARBITRE (ses propres paiements), ADMIN_DNA, FINANCE_DNA, CAA, CAJ, CAF, CRA"
+              }
+            },
+            {
+              "name": "Get Payment Detail",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payments/{{payment_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "{{payment_id}}"
+                  ]
+                },
+                "description": "Détail d'une facture avec la liste des matchs inclus.\n\n**Accès:** ARBITRE, ADMIN_DNA"
+              }
+            },
+            {
+              "name": "Get My Match Payment Records",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/match-payments/referee/{{referee_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "match-payments",
+                    "referee",
+                    "{{referee_id}}"
+                  ]
+                },
+                "description": "Enregistrements de paiement détaillés par match (baseAmount, bonus, deduction par match).\n\n**Accès:** ARBITRE, ADMIN_DNA"
+              }
+            }
+          ]
+        },
+        {
+          "name": "📄 PDF & Rapports (FINANCE_DNA / CRA)",
+          "description": "Génération de PDFs régionaux pour distribution officielle.\n\n**Prérequis:** Des paiements avec statut VALIDATED doivent exister.",
+          "item": [
+            {
+              "name": "Get Regions with Validated Payments",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payments/pdf/regions-list?startDate=2026-01-01&endDate=2026-01-31",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "pdf",
+                    "regions-list"
+                  ],
+                  "query": [
+                    {
+                      "key": "startDate",
+                      "value": "2026-01-01"
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "2026-01-31"
+                    }
+                  ]
+                },
+                "description": "Liste des régions qui ont des paiements validés sur la période.\nUtiliser pour identifier quels PDFs régionaux générer.\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CRA"
+              }
+            },
+            {
+              "name": "Generate Regional PDF",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payments/pdf/regional?region=Tunis&startDate=2026-01-01&endDate=2026-01-31&label=Janvier+2026",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "pdf",
+                    "regional"
+                  ],
+                  "query": [
+                    {
+                      "key": "region",
+                      "value": "Tunis",
+                      "description": "Obligatoire"
+                    },
+                    {
+                      "key": "startDate",
+                      "value": "2026-01-01",
+                      "description": "Obligatoire (ISO date)"
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "2026-01-31",
+                      "description": "Obligatoire (ISO date)"
+                    },
+                    {
+                      "key": "label",
+                      "value": "Janvier 2026",
+                      "description": "Optionnel: libellé période"
+                    },
+                    {
+                      "key": "category",
+                      "value": "",
+                      "description": "Optionnel: filtrer par catégorie",
+                      "disabled": true
+                    },
+                    {
+                      "key": "presidentName",
+                      "value": "",
+                      "description": "Optionnel: nom président CRA",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "📄 PDF état de paiement pour une région.\nContient: tableau arbitres, montants, section signature président CRA.\nRetourne: fichier PDF en téléchargement.\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CRA"
+              }
+            },
+            {
+              "name": "Generate Consolidated Regional PDF",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payments/pdf/consolidated-regional?region=Tunis&startDate=2026-01-01&endDate=2026-01-31&label=Janvier+2026",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "pdf",
+                    "consolidated-regional"
+                  ],
+                  "query": [
+                    {
+                      "key": "region",
+                      "value": "Tunis"
+                    },
+                    {
+                      "key": "startDate",
+                      "value": "2026-01-01"
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "2026-01-31"
+                    },
+                    {
+                      "key": "label",
+                      "value": "Janvier 2026"
+                    },
+                    {
+                      "key": "presidentName",
+                      "value": "",
+                      "description": "Optionnel",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "📄 PDF consolidé toutes catégories pour une région.\nContient: résumé par catégorie + tableau détaillé + page signature.\n\n**Accès:** ADMIN_DNA, FINANCE_DNA, CRA"
+              }
+            },
+            {
+              "name": "Get Payment Statistics",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payments/statistics?startDate=2026-01-01&endDate=2026-01-31",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "statistics"
+                  ],
+                  "query": [
+                    {
+                      "key": "startDate",
+                      "value": "2026-01-01"
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "2026-01-31"
+                    },
+                    {
+                      "key": "category",
+                      "value": "",
+                      "description": "Filtrer par catégorie",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "Statistiques agrégées: totalAmount, totalPayments, avgAmount, par catégorie, par région, par statut.\n\n**Accès:** ADMIN_DNA, FINANCE_DNA"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
