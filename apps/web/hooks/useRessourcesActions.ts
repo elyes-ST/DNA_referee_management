@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { debounce } from '../utils/helpers/debounce';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import { validateForm } from '../utils/helpers/form-validator';
@@ -24,7 +25,8 @@ export const useRessourcesActions = (
     categories: [] as string[],
     thumbnailUrl: '',
     duration: 0,
-    targetCategories: [] as string[]
+    targetCategories: [] as string[],
+    targetRefereeIds: [] as any[]
   });
 
   const handleAdd = async () => {
@@ -46,7 +48,11 @@ export const useRessourcesActions = (
         categories: newRes.categories,
         ...(newRes.thumbnailUrl && { thumbnailUrl: newRes.thumbnailUrl }),
         ...(newRes.duration > 0 && { duration: newRes.duration }),
-        ...(newRes.targetCategories.length > 0 && { targetCategories: newRes.targetCategories })
+        ...(newRes.targetCategories.length > 0 && { targetCategories: newRes.targetCategories }),
+        ...(newRes.targetRefereeIds.length > 0 && { 
+          targetRefereeIds: newRes.targetRefereeIds.map((r: any) => r.value || r),
+          isPersonal: true 
+        })
       };
       
       if (isEditMode && editingId) {
@@ -84,15 +90,37 @@ export const useRessourcesActions = (
       categories: [],
       thumbnailUrl: '',
       duration: 0,
-      targetCategories: []
+      targetCategories: [],
+      targetRefereeIds: []
     });
     setIsEditMode(false);
     setEditingId(null);
   };
 
-  const handleEdit = (resource: any) => {
+  const handleEdit = async (resource: any) => {
     setIsEditMode(true);
     setEditingId(resource._id);
+    
+    // Default empty
+    let populatedReferees: any[] = [];
+    
+    if (resource.targetRefereeIds && resource.targetRefereeIds.length > 0) {
+      try {
+        const promises = resource.targetRefereeIds.map((id: string) => 
+          api.referees.getOne(id).then(res => {
+            const referee = res.data.data || res.data;
+            return {
+              value: referee._id,
+              label: `${referee.userId.firstName} ${referee.userId.lastName} - ${referee.category || 'N/A'} (${referee.matricule || 'N/A'})`
+            };
+          }).catch(() => ({ value: id, label: id }))
+        );
+        populatedReferees = await Promise.all(promises);
+      } catch (error) {
+        console.error("Erreur lors du chargement des arbitres", error);
+      }
+    }
+
     setNewRes({
       title: resource.title,
       url: resource.url,
@@ -101,7 +129,8 @@ export const useRessourcesActions = (
       categories: resource.categories || [],
       thumbnailUrl: resource.thumbnailUrl || '',
       duration: resource.duration || 0,
-      targetCategories: resource.targetCategories || []
+      targetCategories: resource.targetCategories || [],
+      targetRefereeIds: populatedReferees
     });
     setShowModal(true);
   };
@@ -177,6 +206,29 @@ export const useRessourcesActions = (
     }
   };
     
+  const debouncedLoadReferees = useCallback(
+    debounce(async (inputValue: string, callback: Function) => {
+      try {
+        const response = await api.referees.getAll({
+          search: inputValue,
+          limit: 100
+        });
+        callback(response.data.data.map((referee: any) => ({
+          value: referee._id,
+          label: `${referee.userId.firstName} ${referee.userId.lastName} - ${referee.category || 'N/A'} (${referee.matricule || 'N/A'})`
+        })));
+      } catch (error) {
+        console.error('Error loading referees:', error);
+        callback([]);
+      }
+    }, 500), []
+  );
+
+  const loadReferees = (inputValue: string) => 
+    new Promise<{ value: string; label: string }[]>((resolve) => {
+      debouncedLoadReferees(inputValue, resolve);
+    });
+    
   return {
     showModal,
     setShowModal,
@@ -197,6 +249,7 @@ export const useRessourcesActions = (
     sendingNotificationId,
     handleCategoryChange,
     handleTargetCategoryChange,
-    handleIncrementView
+    handleIncrementView,
+    loadReferees
   };
 };

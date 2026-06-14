@@ -52,7 +52,8 @@ const Ressources = () => {
     handleTargetCategoryChange,
     sendNotification,
     sendingNotificationId,
-    handleIncrementView
+    handleIncrementView,
+    loadReferees
   } = useRessourcesActions(refetchResources, currentPage, setCurrentPage, resources);
 
   const handleFilterChange = (newFilters: any) => {
@@ -65,37 +66,51 @@ const Ressources = () => {
     setCurrentPage(1);
   };
 
-    
+  if (loading) {
+    return (
+      <div className="animate-fadeIn flex justify-center items-center h-64">
+        <div className="text-gray-500 dark:text-gray-400 dark:text-flashscore-muted">Chargement...</div>
+      </div>
+    );
+  }
+
   return (
-    <AuthGuard role={[Role.ADMIN_DNA]}>
-    <Card className="animate-fadeIn">
-      <RessourcesHeader onAddResource={() => setShowModal(true)} />
+    <AuthGuard role={[Role.ADMIN_DNA, Role.DESIGNATION_DNA, Role.CAA, Role.CAJ, Role.CAF, Role.CRA]}>
+    <div className="animate-fadeIn relative">
+      <Card className="mb-6">
+        <RessourcesHeader 
+          onAddResource={() => {
+            resetForm();
+            setShowModal(true);
+          }}
+        />
 
-      <RessourcesFilters
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onClearFilters={handleClearFilters}
-      />
+        <RessourcesFilters 
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+        />
 
-      <ResourceGrid
-        resources={resources}
-        loading={loading}
-        categoryOptions={CATEGORY_OPTIONS}
-        onEdit={handleEdit}
-        onDelete={confirmDelete}
-        onSendNotification={sendNotification}
-        sendingNotificationId={sendingNotificationId}
-        onIncrementView={handleIncrementView}
-      />
+        <ResourceGrid 
+          resources={resources}
+          loading={loading}
+          categoryOptions={CATEGORY_OPTIONS}
+          onEdit={handleEdit}
+          onDelete={confirmDelete}
+          onSendNotification={sendNotification}
+          sendingNotificationId={sendingNotificationId}
+          onIncrementView={handleIncrementView}
+        />
+        
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={setCurrentPage} 
+          totalItems={totalItems} 
+        />
+      </Card>
 
-      <Pagination 
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        totalItems={totalItems}
-      />
-
-      <RessourceAddModal 
+      <RessourceAddModal
         showModal={showModal}
         setShowModal={setShowModal}
         resetForm={resetForm}
@@ -105,6 +120,7 @@ const Ressources = () => {
         handleCategoryChange={handleCategoryChange}
         handleTargetCategoryChange={handleTargetCategoryChange}
         handleAdd={handleAdd}
+        loadReferees={loadReferees}
       />
 
       <DeleteModal
@@ -114,7 +130,7 @@ const Ressources = () => {
         handleDelete={handleDelete}
         message="Êtes-vous sûr de vouloir supprimer cette ressource ? Cette action est irréversible."
       />
-    </Card>
+    </div>
     </AuthGuard>
     );
     

@@ -33,7 +33,6 @@ export class FilterRefereesDto extends PaginationDto {
   @Type(() => Boolean)
   isVARCertified?: boolean;
 
-  /** Filter by linked User account status */
   @IsBoolean()
   @IsOptional()
   @Type(() => Boolean)
@@ -43,4 +42,14 @@ export class FilterRefereesDto extends PaginationDto {
   @IsString()
   @IsOptional()
   search?: string;
+
+  /** Maximum age filter */
+  @IsOptional()
+  @Type(() => Number)
+  maxAge?: number;
+
+  /** Minimum age filter */
+  @IsOptional()
+  @Type(() => Number)
+  minAge?: number;
 }

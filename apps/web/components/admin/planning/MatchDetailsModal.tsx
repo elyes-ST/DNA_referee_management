@@ -1,7 +1,8 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../../../components/ui/Modal';
 import { Shield } from 'lucide-react';
+import { api } from "../../../services/api";
 
 interface MatchDetailsModalProps {
   match: any | null;
@@ -15,6 +16,15 @@ const STATUS_LABELS: Record<string, string> = {
   COMPLETED: 'Terminé',
   POSTPONED: 'Reporté',
   CANCELLED: 'Annulé',
+};
+
+const REFEREE_ROLES: Record<string, string> = {
+  ARBITRE_CENTRAL: 'Arbitre Central',
+  ASSISTANT_1: 'Assistant 1',
+  ASSISTANT_2: 'Assistant 2',
+  QUATRIEME_ARBITRE: '4ème Arbitre',
+  ARBITRE_VAR: 'Arbitre VAR',
+  ASSISTANT_VAR: 'Assistant VAR 1',
 };
 
 const formatDate = (date?: string) => {
@@ -46,6 +56,42 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
   competitionLabels = {},
 }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'stats'>('info');
+  const [resolvedReferees, setResolvedReferees] = useState<Record<string, any>>({});
+  const [loadingReferees, setLoadingReferees] = useState(false);
+
+  useEffect(() => {
+    if (!match?.designations?.length) return;
+
+    const fetchAll = async () => {
+      setLoadingReferees(true);
+      try {
+        const ids: string[] = match.designations
+          .map((d: any) => {
+            const raw = d.refereeId;
+            return typeof raw === 'string' ? raw : raw?._id;
+          })
+          .filter(Boolean);
+
+        const results = await Promise.all(
+          ids.map((id) =>
+            api.referees.getOne(id)
+              .then((res: any) => res.data)
+              .catch(() => null)
+          )
+        );
+
+        const map: Record<string, any> = {};
+        ids.forEach((id, i) => {
+          if (results[i]) map[id] = results[i];
+        });
+        setResolvedReferees(map);
+      } finally {
+        setLoadingReferees(false);
+      }
+    };
+
+    fetchAll();
+  }, [match?._id]);
 
   if (!match) return null;
 
@@ -56,8 +102,9 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
 
   const homeScore = match.homeScore ?? match.score?.homeScore;
   const awayScore = match.awayScore ?? match.score?.awayScore;
-  const hasScore = homeScore !== null && homeScore !== undefined
-    && awayScore !== null && awayScore !== undefined;
+  const hasScore =
+    homeScore !== null && homeScore !== undefined &&
+    awayScore !== null && awayScore !== undefined;
 
   const homeName = match.homeTeam?.name || match.homeTeam || 'Équipe A';
   const awayName = match.awayTeam?.name || match.awayTeam || 'Équipe B';
@@ -65,6 +112,7 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
   return (
     <Modal isOpen={!!match} onClose={onClose} title="Détails du match">
       <div className="space-y-4 -m-px">
+
         {/* Scoreboard header */}
         <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-xl px-4 pt-4 pb-5 -mx-1">
           <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-flashscore-muted mb-4 px-1">
@@ -88,7 +136,9 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
             <div className="flex flex-col items-center justify-center px-3 min-w-[120px]">
               {hasScore ? (
                 <div className="text-4xl font-bold text-white tracking-wider tabular-nums">
-                  {homeScore} <span className="text-gray-500 dark:text-gray-400 dark:text-flashscore-muted">-</span> {awayScore}
+                  {homeScore}{' '}
+                  <span className="text-gray-500 dark:text-flashscore-muted">-</span>{' '}
+                  {awayScore}
                 </div>
               ) : (
                 <div className="text-3xl font-bold text-white tabular-nums">
@@ -108,7 +158,9 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
                     : 'bg-blue-500/20 text-blue-300'
                 }`}
               >
-                {isLive && <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-flashscore-card animate-pulse" />}
+                {isLive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                )}
                 {STATUS_LABELS[match.status] || match.status}
               </span>
             </div>
@@ -127,7 +179,7 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
             className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'info'
                 ? 'border-[#ce1126] text-[#ce1126]'
-                : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-flashscore-muted hover:text-gray-700 dark:text-gray-300'
+                : 'border-transparent text-gray-500 dark:text-flashscore-muted hover:text-gray-700 dark:hover:text-gray-300'
             }`}
             onClick={() => setActiveTab('info')}
           >
@@ -137,7 +189,7 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
             className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'stats'
                 ? 'border-[#ce1126] text-[#ce1126]'
-                : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-flashscore-muted hover:text-gray-700 dark:text-gray-300'
+                : 'border-transparent text-gray-500 dark:text-flashscore-muted hover:text-gray-700 dark:hover:text-gray-300'
             }`}
             onClick={() => setActiveTab('stats')}
           >
@@ -163,7 +215,9 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
             )}
             {match.notes && (
               <div className="pt-3">
-                <span className="text-gray-500 dark:text-gray-400 dark:text-flashscore-muted text-xs uppercase tracking-wide block mb-1.5">Notes</span>
+                <span className="text-gray-500 dark:text-flashscore-muted text-xs uppercase tracking-wide block mb-1.5">
+                  Notes
+                </span>
                 <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-flashscore-hover rounded-lg p-3 text-sm leading-relaxed">
                   {match.notes}
                 </p>
@@ -174,9 +228,15 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
           <div className="space-y-3 text-sm">
             {hasScore ? (
               <div className="flex items-center justify-between py-3 px-1 bg-gray-50 dark:bg-flashscore-hover rounded-lg">
-                <span className="text-xl font-bold text-gray-900 dark:text-flashscore-text w-10 text-center">{homeScore}</span>
-                <span className="text-gray-500 dark:text-gray-400 dark:text-flashscore-muted text-xs uppercase tracking-wide font-medium">Buts</span>
-                <span className="text-xl font-bold text-gray-900 dark:text-flashscore-text w-10 text-center">{awayScore}</span>
+                <span className="text-xl font-bold text-gray-900 dark:text-flashscore-text w-10 text-center">
+                  {homeScore}
+                </span>
+                <span className="text-gray-500 dark:text-flashscore-muted text-xs uppercase tracking-wide font-medium">
+                  Buts
+                </span>
+                <span className="text-xl font-bold text-gray-900 dark:text-flashscore-text w-10 text-center">
+                  {awayScore}
+                </span>
               </div>
             ) : (
               <p className="text-gray-400 dark:text-flashscore-muted text-center py-2">
@@ -185,12 +245,12 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
             )}
 
             <div className="flex items-center justify-between py-2.5 border-b border-gray-100 dark:border-flashscore-border">
-              <span className="text-gray-500 dark:text-gray-400 dark:text-flashscore-muted">Assistance vidéo (VAR)</span>
+              <span className="text-gray-500 dark:text-flashscore-muted">Assistance vidéo (VAR)</span>
               <span
                 className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                   match.hasVAR
                     ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-100 dark:bg-flashscore-border text-gray-500 dark:text-gray-400 dark:text-flashscore-muted'
+                    : 'bg-gray-100 dark:bg-flashscore-border text-gray-500 dark:text-flashscore-muted'
                 }`}
               >
                 {match.hasVAR ? 'Activée' : 'Non disponible'}
@@ -199,40 +259,59 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
 
             {match.designationStatus && (
               <div className="flex items-center justify-between py-2.5 border-b border-gray-100 dark:border-flashscore-border">
-                <span className="text-gray-500 dark:text-gray-400 dark:text-flashscore-muted">Désignation</span>
-                <span className="font-medium text-gray-800 dark:text-flashscore-text">{match.designationStatus}</span>
+                <span className="text-gray-500 dark:text-flashscore-muted">Désignation</span>
+                <span className="font-medium text-gray-800 dark:text-flashscore-text">
+                  {match.designationStatus}
+                </span>
               </div>
             )}
 
+            {/* Officiels */}
             {match.designations && match.designations.length > 0 ? (
               <div className="pt-1">
-                <span className="text-gray-500 dark:text-gray-400 dark:text-flashscore-muted text-xs uppercase tracking-wide block mb-2">Officiels du match</span>
-                <div className="space-y-2">
-                  {match.designations.map((d: any, idx: number) => (
-                    <div
-                      key={d.refereeId?._id || d.refereeId || idx}
-                      className="flex items-center justify-between py-1"
-                    >
-                      <span className="text-gray-700 dark:text-gray-300">
-                        {d.refereeId?.name || d.refereeId?.fullName || 'Arbitre'}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-flashscore-muted bg-gray-100 dark:bg-flashscore-border px-2 py-0.5 rounded">
-                          {d.role}
-                        </span>
-                        {d.confirmed ? (
-                          <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                            Confirmé
+                <span className="text-gray-500 dark:text-flashscore-muted text-xs uppercase tracking-wide block mb-2">
+                  Officiels du match
+                </span>
+
+                {loadingReferees ? (
+                  <div className="flex justify-center py-6">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#ce1126]" />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {match.designations.map((d: any, idx: number) => {
+                      const raw = d.refereeId;
+                      const id = typeof raw === 'string' ? raw : raw?._id;
+                      const referee = resolvedReferees[id];
+                      const user = referee?.userId;
+                      const fullName = user
+                        ? `${user.firstName} ${user.lastName}`.trim()
+                        : 'Arbitre';
+                      const matricule = referee?.matricule;
+
+                      return (
+                        <div
+                          key={id || idx}
+                          className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 dark:bg-flashscore-hover"
+                        >
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-medium text-gray-800 dark:text-flashscore-text truncate">
+                              {fullName}
+                            </span>
+                            {matricule && (
+                              <span className="text-[11px] text-gray-400 dark:text-flashscore-muted font-mono">
+                                {matricule}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs font-semibold text-[#ce1126] bg-red-50 dark:bg-red-950/20 px-2 py-0.5 rounded ml-2 flex-shrink-0">
+                            {REFEREE_ROLES[d.role] || d.role}
                           </span>
-                        ) : (
-                          <span className="text-xs font-semibold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">
-                            En attente
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-gray-400 dark:text-flashscore-muted text-center py-2">
@@ -247,7 +326,6 @@ export const MatchDetailsModal: React.FC<MatchDetailsModalProps> = ({
 };
 
 const InfoRow = ({
-  icon,
   label,
   value,
   capitalize = false,
@@ -258,7 +336,9 @@ const InfoRow = ({
   capitalize?: boolean;
 }) => (
   <div className="flex items-center justify-between py-2.5 border-b border-gray-100 dark:border-flashscore-border">
-    <span className="text-gray-500 dark:text-gray-400 dark:text-flashscore-muted">{label}</span>
-    <span className={`font-medium text-gray-800 dark:text-flashscore-text text-right ${capitalize ? 'capitalize' : ''}`}>{value}</span>
+    <span className="text-gray-500 dark:text-flashscore-muted">{label}</span>
+    <span className={`font-medium text-gray-800 dark:text-flashscore-text text-right ${capitalize ? 'capitalize' : ''}`}>
+      {value}
+    </span>
   </div>
 );

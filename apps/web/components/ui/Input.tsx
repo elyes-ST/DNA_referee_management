@@ -194,9 +194,15 @@ export function Input({
           loadOptionsLabelMap[id][selected.value] = selected.label;
         }
       }}
-      styles={asyncSelectStyles}
+      styles={{
+        ...asyncSelectStyles,
+        menuPortal: (base) => ({ ...base, zIndex: 9999 })
+      }}
+      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+      menuPosition="fixed"
+      isSearchable={true}
       isClearable
-      placeholder={placeholder}
+      placeholder={placeholder || "Tapez pour rechercher..."}
       isDisabled={disabled}
     />
   );
@@ -234,9 +240,15 @@ export function Input({
           });
         }
       }}
-      styles={asyncSelectStyles}
+      styles={{
+        ...asyncSelectStyles,
+        menuPortal: (base) => ({ ...base, zIndex: 9999 })
+      }}
+      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+      menuPosition="fixed"
+      isSearchable={true}
       isClearable
-      placeholder={placeholder}
+      placeholder={placeholder || "Tapez pour rechercher..."}
       isDisabled={disabled}
     />
   );

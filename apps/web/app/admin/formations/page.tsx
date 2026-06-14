@@ -58,7 +58,8 @@ const Formations = () => {
     handleGradeChange,
     handleSendNotification,
     sendingNotificationId,
-    loadReferees
+    loadReferees,
+    searchBulkReferees
   } = useFormationsActions(refetchConvocations, convocations, currentPage, setCurrentPage);
 
   // Form fields
@@ -136,6 +137,7 @@ const Formations = () => {
         onSubmit={handleCreateEvent}
         fields={eventFields}
         loadReferees={loadReferees as any}
+        searchBulkReferees={searchBulkReferees}
       />
 
       <GradingModal

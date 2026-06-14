@@ -147,7 +147,7 @@ export const useFormationsActions = (
       try {
         const response = await api.referees.getAll({
           search: inputValue,
-          limit: 10
+          limit: 100
         });
       callback(response.data.data.map((referee: any) => ({
         value: referee._id,
@@ -163,6 +163,34 @@ export const useFormationsActions = (
   new Promise((resolve) => {
     debouncedLoadReferees(inputValue, resolve);
   });
+
+  const searchBulkReferees = async (filters: any) => {
+    try {
+      // Clean filters
+      const cleanFilters: any = { limit: 1000 };
+      if (filters.category) cleanFilters.category = filters.category;
+      if (filters.region) cleanFilters.region = filters.region;
+      if (filters.maxAge) cleanFilters.maxAge = filters.maxAge;
+      if (filters.minAge) cleanFilters.minAge = filters.minAge;
+
+      const response = await api.referees.getAll(cleanFilters);
+      const referees = response.data.data;
+      
+      if (!referees || referees.length === 0) {
+        toast.info("Aucun arbitre ne correspond à ces critères.");
+        return [];
+      }
+
+      return referees.map((referee: any) => ({
+        value: referee._id,
+        label: `${referee.userId.firstName} ${referee.userId.lastName} - ${referee.category || 'N/A'} (${referee.matricule || 'N/A'})`
+      }));
+    } catch (error) {
+      console.error('Error fetching bulk referees:', error);
+      toast.error('Erreur lors de la recherche des arbitres.');
+      return [];
+    }
+  };
 
   const openGrading = (event: any) => {
     setSelectedEvent(event);
@@ -230,6 +258,7 @@ export const useFormationsActions = (
     handleGradeChange,
     handleSendNotification,
     sendingNotificationId,
-    loadReferees
+    loadReferees,
+    searchBulkReferees
   };
 };

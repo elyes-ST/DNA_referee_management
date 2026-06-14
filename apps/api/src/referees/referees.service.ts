@@ -150,6 +150,8 @@ export class RefereesService {
       isVARCertified,
       isActive,
       search,
+      maxAge,
+      minAge,
     } = filterDto;
     const skip = (page - 1) * limit;
 
@@ -158,6 +160,21 @@ export class RefereesService {
     if (region) filter.region = region;
     if (isAvailable !== undefined) filter.isAvailable = isAvailable;
     if (isVARCertified !== undefined) filter.isVARCertified = isVARCertified;
+
+    if (maxAge !== undefined || minAge !== undefined) {
+      filter.dateOfBirth = {};
+      const today = new Date();
+      if (maxAge !== undefined) {
+        const minBirthDate = new Date();
+        minBirthDate.setFullYear(today.getFullYear() - maxAge - 1);
+        filter.dateOfBirth.$gt = minBirthDate;
+      }
+      if (minAge !== undefined) {
+        const maxBirthDate = new Date();
+        maxBirthDate.setFullYear(today.getFullYear() - minAge);
+        filter.dateOfBirth.$lte = maxBirthDate;
+      }
+    }
 
     if (search || isActive !== undefined) {
       const userFilter: any = { role: Role.ARBITRE };
